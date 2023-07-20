@@ -24,18 +24,34 @@ PONTOS: .word 1000000
 
 
 ######## SAIDA DE FANTASMAS######
+VIDAS_GHOST_GATE:.string "GHOST GATE"
 POSICAO_GHOST_GATE: .half 28,32
 GHOST_GATE_LIFES: .byte 5
 #################################
 
 #####FANTASMA 1######
-POSICAO_FANTASMA: .half 44,32
-ANTIGA_POSICAO_FANTASMA: .half 0,0
-FANTASMA_VIVO: .byte 1
-DIR_FANTASMA: .byte 'd'
-COUNTER_FANTASMA:.word 0X00000000
+POSICAO_FANTASMA_1: .half 44,32
+ANTIGA_POSICAO_FANTASMA_1: .half 0,0
+FANTASMA_1_VIVO: .byte 0
+DIR_FANTASMA_1: .byte 'd'
+COUNTER_FANTASMA_1:.word 0
 ##########
 
+#####FANTASMA 2######
+POSICAO_FANTASMA_2: .half 44,32
+ANTIGA_POSICAO_FANTASMA_2: .half 0,0
+FANTASMA_2_VIVO: .byte 1
+DIR_FANTASMA_2: .byte 's'
+COUNTER_FANTASMA_2:.word 0
+##########
+
+#####FANTASMA 3######
+POSICAO_FANTASMA_3: .half 44,32
+ANTIGA_POSICAO_FANTASMA_3: .half 0,0
+FANTASMA_3_VIVO: .byte 0
+DIR_FANTASMA_3: .byte 'd'
+COUNTER_FANTASMA_3:.word 0
+##########
 
 
 TEST: .word 0x0000FFFF
@@ -44,7 +60,6 @@ TEST: .word 0x0000FFFF
 .include "key.data"
 .include "portal.data"
 #.include "matrix_test.data"
-.include "test_mapa.data"
 .include "lower_block.data"
 .include "block.s"
 .include "black.s"
@@ -55,12 +70,11 @@ TEST: .word 0x0000FFFF
 .include "mapa_inicial.data"
 .include "under_mapa.data"
 .include "sprite16x16.data"
-.include "mapa_3.data"
+.include "aux_mapa_3.data"
 .include "matrix3.data"
 .include "ghost_gate.data"
 
 .text
-
 MAPA:  
 	la a0, mapa_1
 	li a1, 0
@@ -70,14 +84,6 @@ MAPA:
 	li a3, 1
 	call PRINT  #FUNDO NO FRAME 1
 	
-	la a0, ghost_gate
-	la t0, POSICAO_GHOST_GATE
-	lh a1, 0(t0)
-	lh a2, 2(t0)
-	li a3, 0
-	call PRINT
-	li a3,1
-	call PRINT
 	
 	
 	
@@ -170,9 +176,49 @@ MAPA:
 	li a4,1
 	ecall
 	
+	li a7,104
+	la a0,VIDAS_GHOST_GATE
+	li a1,220
+	li a2,150
+	li a3,0x0038
+	li a4,0
+	ecall
+	
+	li a7,104
+	la a0,VIDAS_GHOST_GATE
+	li a1,220
+	li a2,150
+	li a3,0x0038
+	li a4,1
+	ecall
+	
+	la a0, ghost_gate
+	la t0, POSICAO_GHOST_GATE
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	li a3, 0
+	call PRINT
+	li a3,1
+	call PRINT
+	
 GAME_LOOP:
 	call INPUT #PROCEDIMENTO QUE CHECA SE HÁ ALGUM BOTÃO QUE FOI APERTADO
 	 #s0: frame a ser escolhido
+	
+	
+	la t1, GHOST_GATE_LIFES
+	lb t0, 0(t1)
+	ble  t0, zero, DONT_PRINT_GATE
+	la a0, ghost_gate
+	la t0, POSICAO_GHOST_GATE
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	li a3, 0
+	call PRINT
+	li a3,1
+	call PRINT
+	DONT_PRINT_GATE:
+	 
 	 la t1,LIFE
 	lb t0, 0(t1)
 	li a7,101
@@ -216,6 +262,27 @@ GAME_LOOP:
 	li a3,0x0038
 	li a4,1
 	ecall
+	
+	
+	la t1,GHOST_GATE_LIFES
+	lb t0, 0(t1)
+	li a7,101
+	mv a0,t0
+	li a1,280
+	li a2,170
+	li a3,0x0038
+	li a4,0
+	ecall
+	
+	la t1,GHOST_GATE_LIFES
+	lb t0, 0(t1)
+	li a7,101
+	mv a0,t0
+	li a1,280
+	li a2,170
+	li a3,0x0038
+	li a4,1
+	ecall
 	 
 	 
 	xori s0, s0, 1  #modifica os frames ente 0 e 1
@@ -244,8 +311,11 @@ GAME_LOOP:
 	xori a3, a3,1
 	call PRINT
 	
-	j MOVER_FANTASMA
-	MOVEU_FANTASMA:
+	j MOVER_FANTASMA_2
+	MOVEU_FANTASMA_2:
+	j MOVER_FANTASMA_1
+	MOVEU_FANTASMA_1:
+	
 	
 	
 	la t1, CAUGHT_KEY
@@ -303,9 +373,7 @@ GAME_LOOP:
 	li t0, 's'
 	beq t2, t0, MOVE_DOWN   #move para  baixo
 	li t0, 'd'
-	beq t2, t0, MOVE_RIGHT   #move para	 direita
-	li t0, 'l'
-	beq t2, t0, ATTACK
+	beq t2, t0, MOVE_RIGHT   #move para	 direit
 	li t0, 'k'
 	beq t2, t0, TIRO
 	
@@ -313,6 +381,7 @@ GAME_LOOP:
 	
 	
 CONTINUE: ret	
+
 
 MOVE_LEFT:
 	la t6, DIR_PERSONAGEM
@@ -686,154 +755,10 @@ MOVE_DOWN:
 	
 	ret
 
-ATTACK:
-	#Atualiza posicao inicial do tiro
-	#la t0, POSICAO_PERSONAGEM
-	#lh t1, 0(t0)
-	#lh t2, 2(t0)
-	#la t0, POSICAO_TIRO
-	#sh t1, 0(t0)
-	#sh t2, 2(t0)
-	
-	la t0, DIR_PERSONAGEM
-	lb t5, 0(t0)
-	li t1, 'w'
-	beq t5, t1, ATT_UP
-	li t1, 's'
-	beq t5, t1, ATT_DOWN
-	li t1,'d'
-	beq t5, t1, ATT_RIGHT
-	li t1, 'a'
-	beq t5, t1, ATT_LEFT
-	ret
-		
-	
-	
-		
-		ATT_DOWN:
-		la t0,POSICAO_PERSONAGEM
-		lh a0, 0(t0)
-		lh a1, 2(t0)
-		mv a2, a0
-		mv a3, a1
-		li t0, 240
-		LOOP_ATT_DOWN:
-		bge a3, t0, END_LOOP_ATT_DOWN
-		addi a3, a3, 4
-		j LOOP_ATT_DOWN
-		END_LOOP_ATT_DOWN:
-		li a4, 0x38
-		mv a5, s3
-		li a7, 47
-		ecall
-		li t0, 10000
-		LOOP_ERASE_LASER_DOWN:
-		addi t0, t0, -1
-		bge t0, zero, LOOP_ERASE_LASER_DOWN
-		li a4, 0x000
-		li a7,47
-		ecall
-		ret
-		
-		ATT_UP:
-		la t0,POSICAO_PERSONAGEM
-		lh a0, 0(t0)
-		lh a1, 2(t0)
-		mv a2, a0
-		mv a3, a1
-		LOOP_ATT_UP:
-		ble a3, zero, END_LOOP_ATT_UP
-		addi a3, a3, -4
-		j LOOP_ATT_UP
-		END_LOOP_ATT_UP:
-		li a4, 0x38
-		mv a5, s3
-		li a7, 47
-		ecall
-		
-		li t0, 10000
-		LOOP_ERASE_LASER_UP:
-		addi t0, t0, -1
-		bge t0, zero, LOOP_ERASE_LASER_UP
-		la t0,POSICAO_PERSONAGEM
-		lh a0, 0(t0)
-		lh a1, 2(t0)
-		mv a2, a0
-		mv a3, a1
-		LOOP_ERASE_UP:
-		ble a3, zero, END_LOOP_ERASE_UP
-		addi a3, a3, -4
-		j LOOP_ERASE_UP
-		END_LOOP_ERASE_UP:
-		li a4, 0x000
-		mv a5, s3
-		li a7, 47
-		ecall
-		ret
-		
-		ATT_RIGHT:
-		la t0,POSICAO_PERSONAGEM
-		lh a0, 0(t0)
-		lh a1, 2(t0)
-		li t0, 320
-		mv a2, a0
-		LOOP_ATT_RIGHT:
-		bge a2, t0, END_LOOP_ATT_RIGHT
-		addi a2, a2, 4
-		j LOOP_ATT_RIGHT
-		END_LOOP_ATT_RIGHT:
-		mv a3,  a1
-		li a4, 0x38
-		mv a5, s3
-		li a7, 47
-		ecall
-		li t0, 10000
-		LOOP_ERASE_LASER_RIGHT:
-		addi t0, t0, -1
-		bge t0, zero, LOOP_ERASE_LASER_RIGHT
-		li a4, 0x000
-		li a7,47
-		ecall
-		ret
-		
-		ATT_LEFT:
-		la t0,POSICAO_PERSONAGEM
-		lh a0, 0(t0)
-		lh a1, 2(t0)
-		mv a2, a0
-		LOOP_ATT_LEFT:
-		ble a2, zero, END_LOOP_ATT_LEFT
-		addi a2, a2, -4
-		j LOOP_ATT_LEFT
-		END_LOOP_ATT_LEFT:
-		mv a3,  a1
-		li a4, 0x38
-		mv a5, s3
-		li a7, 47
-		ecall
-		li t0, 10000
-		LOOP_ERASE_LASER_LEFT:
-		addi t0, t0, -1
-		bge t0, zero, LOOP_ERASE_LASER_LEFT
-		la t0,POSICAO_PERSONAGEM
-		lh a0, 0(t0)
-		lh a1, 2(t0)
-		mv a2, a0
-		LOOP_ERASE_LEFT:
-		ble a2, zero, END_LOOP_ERASE_LEFT
-		addi a2, a2, -4
-		j LOOP_ERASE_LEFT
-		END_LOOP_ERASE_LEFT:
-		mv a3,  a1
-		li a4, 0x00
-		mv a5, s3
-		li a7, 47
-		ecall
-		ret
-ret	
-
 	
 
+	
+AUX_GAME_LOOP: j GAME_LOOP
 ####APERTA K
 TIRO:
 	#Atualiza posicao inicial do tiro
@@ -916,8 +841,10 @@ TIRO:
 		li t0, 16
 		blt a2, t0, GAME_LOOP
 		
-		#ebreak
-		call CHECK_IF_KILLED_GHOST
+		
+		call CHECK_IF_KILLED_GHOST_1
+		call CHECK_IF_KILLED_GHOST_2
+		call CHECK_IF_DESTROYED_GATE
 		j  LOOP_PRINT_TIRO_UP
 		END_TIRO_UP: ret
 		
@@ -981,7 +908,8 @@ TIRO:
 		li t0, 210
 		bgt a2, t0, GAME_LOOP
 		
-		call CHECK_IF_KILLED_GHOST
+		call CHECK_IF_KILLED_GHOST_1
+		call CHECK_IF_DESTROYED_GATE
 		j LOOP_PRINT_TIRO_DOWN
 		END_TIRO_DOWN: ret
 		
@@ -1048,8 +976,10 @@ TIRO:
 		li t0, 294
 		bge a1, t0, GAME_LOOP
 		
-		#ebreak
-		call CHECK_IF_KILLED_GHOST
+
+		call CHECK_IF_KILLED_GHOST_1
+		call CHECK_IF_KILLED_GHOST_2
+		call CHECK_IF_DESTROYED_GATE
 		j LOOP_PRINT_TIRO_RIGHT
 		END_TIRO_RIGHT: ret
 		
@@ -1113,23 +1043,24 @@ TIRO:
 		blt a1, t0,GAME_LOOP
 		
 		#ebreak
-		call CHECK_IF_KILLED_GHOST
-		
+		call CHECK_IF_KILLED_GHOST_1
+		call CHECK_IF_KILLED_GHOST_2
+		call CHECK_IF_DESTROYED_GATE
 		
 		
 		j LOOP_PRINT_TIRO_LEFT
 		END_TIRO_LEFT: ret
 
 		
-				
-	CHECK_IF_KILLED_GHOST:
-		la t0, FANTASMA_VIVO
+######## VERIFICA SE O FANTASMA TOMOU TIRO#######			
+	CHECK_IF_KILLED_GHOST_1:
+		la t0, FANTASMA_1_VIVO
 		lb t1, 0(t0)
-		bne zero, t1, 	CONTINUE_CHECK_IF_KILLED_GHOST
+		bne zero, t1, 	CONTINUE_CHECK_IF_KILLED_GHOST_1
 		ret
 	
-		CONTINUE_CHECK_IF_KILLED_GHOST:
-		la t0, POSICAO_FANTASMA
+		CONTINUE_CHECK_IF_KILLED_GHOST_1:
+		la t0, POSICAO_FANTASMA_1
 		la t1, POSICAO_TIRO
 		
 		lh t2, 0(t0)
@@ -1168,30 +1099,91 @@ TIRO:
 		and a0, a0, a1
 		
 		#ebreak
-		beq zero, a0, END_CHECK_GHOST
-		la t0, POSICAO_FANTASMA
+		beq zero, a0, END_CHECK_GHOST_1
+		la t0, POSICAO_FANTASMA_1
 		la a0, black_block
 		lh a1, 0(t0)
 		lh a2, 2(t0)
 		mv a3,s0
 		
 		call PRINT
-		la t0, FANTASMA_VIVO
+		la t0, FANTASMA_1_VIVO
 		sb zero, 0(t0)						
 		j GAME_LOOP
-	END_CHECK_GHOST: ret
+	END_CHECK_GHOST_1: ret
 
-
-	CHECK_IF_HIT_GHOST:
-		la t0, FANTASMA_VIVO
+	CHECK_IF_KILLED_GHOST_2:
+		la t0, FANTASMA_2_VIVO
 		lb t1, 0(t0)
-		bne zero, t1, 	CONTINUE_CHECK_IF_HIT_GHOST
+		bne zero, t1, 	CONTINUE_CHECK_IF_KILLED_GHOST_2
+		ret
+	
+		CONTINUE_CHECK_IF_KILLED_GHOST_2:
+		la t0, POSICAO_FANTASMA_2
+		la t1, POSICAO_TIRO
+		
+		lh t2, 0(t0)
+		lh t3, 0(t1)
+		addi t2, t2, -1
+		slt t5, t2, t3
+		addi t2, t2, 17
+		slt t6, t3, t2
+		and t5, t5, t6
+		addi t2, t2, -17
+		slt t6, t2, t3
+		addi t3, t3, 4
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t6, t4
+		or t5, t5, t4
+		
+		mv a1, t5
+		lh t2, 2(t0)
+		lh t3, 2(t1)
+		addi t2, t2, -1
+		slt t5, t2, t3
+		addi t2, t2, 17
+		slt t6, t3, t2
+		and t5, t5, t6
+		addi t2, t2, -17
+		slt t6, t2, t3
+		addi t3, t3, 4
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t6, t4
+		or t5, t5, t4
+		
+		mv a0, t5
+		
+		and a0, a0, a1
+		
+		#ebreak
+		beq zero, a0, END_CHECK_GHOST_2
+		la t0, POSICAO_FANTASMA_2
+		la a0, black_block
+		lh a1, 0(t0)
+		lh a2, 2(t0)
+		mv a3,s0
+		
+		call PRINT
+		la t0, FANTASMA_2_VIVO
+		sb zero, 0(t0)						
+		j GAME_LOOP
+	END_CHECK_GHOST_2: ret
+
+
+
+###### VERIFICA SE O PERSONAGEM FOI ATINGIDO PELO FANTASMA######
+	CHECK_IF_HIT_GHOST_1:
+		la t0, FANTASMA_1_VIVO
+		lb t1, 0(t0)
+		bne zero, t1, 	CONTINUE_CHECK_IF_HIT_GHOST_1
 		ret
 		
-		CONTINUE_CHECK_IF_HIT_GHOST:
+		CONTINUE_CHECK_IF_HIT_GHOST_1:
 		
 		la t0, POSICAO_PERSONAGEM
-		la t1, POSICAO_FANTASMA
+		la t1, POSICAO_FANTASMA_1
 		
 		lh t2, 0(t0)
 		lh t3, 0(t1)
@@ -1229,28 +1221,167 @@ TIRO:
 		and a0, a0, a1
 		
 		
-		beq zero, a0, END_CHECK_HIT_GHOST
+		beq zero, a0, END_CHECK_HIT_GHOST_1
 		
 		la t1, LIFE
 		lb t0, 0(t1)
 		addi t0, t0, -1
 		sb t0, 0(t1)
 		
-		la t0, POSICAO_FANTASMA
+		la t0, POSICAO_FANTASMA_1
 		la a0, black_block
 		lh a1, 0(t0)
 		lh a2, 2(t0)
 		mv a3,s0
 		
 		call PRINT
-		la t0, FANTASMA_VIVO
+		la t0, FANTASMA_1_VIVO
 		sb zero, 0(t0)						
-		j GAME_LOOP
-	END_CHECK_HIT_GHOST: ret
+		j AUX_GAME_LOOP
+	END_CHECK_HIT_GHOST_1: ret
+	
+	
+
+CHECK_IF_HIT_GHOST_2:
+		la t0, FANTASMA_2_VIVO
+		lb t1, 0(t0)
+		bne zero, t1, 	CONTINUE_CHECK_IF_HIT_GHOST_2
+		ret
+		
+		CONTINUE_CHECK_IF_HIT_GHOST_2:
+		
+		la t0, POSICAO_PERSONAGEM
+		la t1, POSICAO_FANTASMA_2
+		
+		lh t2, 0(t0)
+		lh t3, 0(t1)
+		addi t2, t2, -1
+		slt t5, t2, t3
+		addi t2, t2, 17
+		slt t6, t3, t2
+		and t5, t5, t6
+		addi t2, t2, -17
+		slt t6, t2, t3
+		addi t3, t3, 16
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t6, t4
+		or t5, t5, t4
+		mv a1, t5
+		
+		lh t2, 2(t0)
+		lh t3, 2(t1)
+		addi t2, t2, -1
+		slt t5, t2, t3
+		addi t2, t2, 17
+		slt t6, t3, t2
+		and t5, t5, t6
+		addi t2, t2, -17
+		slt t6, t2, t3
+		addi t3, t3, 16
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t6, t4
+		or t5, t5, t4
+		
+		mv a0, t5
+		
+		and a0, a0, a1
+		
+		
+		beq zero, a0, END_CHECK_HIT_GHOST_2
+		
+		la t1, LIFE
+		lb t0, 0(t1)
+		addi t0, t0, -1
+		sb t0, 0(t1)
+		
+		la t0, POSICAO_FANTASMA_2
+		la a0, black_block
+		lh a1, 0(t0)
+		lh a2, 2(t0)
+		mv a3,s0
+		
+		call PRINT
+		la t0, FANTASMA_2_VIVO
+		sb zero, 0(t0)						
+		j AUX_GAME_LOOP
+	END_CHECK_HIT_GHOST_2: ret
+	
+##############	
 	
 	
 	
-	
+	CHECK_IF_DESTROYED_GATE:
+		la t0, GHOST_GATE_LIFES
+		lb t1, 0(t0)
+		bne zero, t1, 	CONTINUE_CHECK_IF_DESTROYED_GATE
+		ret
+		
+		CONTINUE_CHECK_IF_DESTROYED_GATE:
+		
+		la t0, POSICAO_GHOST_GATE
+		la t1, POSICAO_TIRO
+		
+		lh t2, 0(t0)
+		lh t3, 0(t1)
+		addi t2, t2, -1
+		slt t5, t2, t3
+		addi t2, t2, 17
+		slt t6, t3, t2
+		and t5, t5, t6
+		addi t2, t2, -17
+		slt t6, t2, t3
+		addi t3, t3, 4
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t6, t4
+		or t5, t5, t4
+		mv a1, t5
+		
+		lh t2, 2(t0)
+		lh t3, 2(t1)
+		addi t2, t2, -1
+		slt t5, t2, t3
+		addi t2, t2, 17
+		slt t6, t3, t2
+		and t5, t5, t6
+		addi t2, t2, -17
+		slt t6, t2, t3
+		addi t3, t3, 4
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t6, t4
+		or t5, t5, t4
+		
+		mv a0, t5
+		
+		and a0, a0, a1
+		
+		
+		beq zero, a0, END_CHECK_IF_DESTROYED_GATE
+		
+		la t1, GHOST_GATE_LIFES
+		lb t0, 0(t1)
+		addi t0, t0, -1
+		
+		sb t0, 0(t1)
+		
+		
+		bne zero, t0, MOVEU_FANTASMA_1
+		sb zero, 0(t1)
+		la t0, POSICAO_GHOST_GATE
+		la a0, black_block
+		lh a1, 0(t0)
+		lh a2, 2(t0)
+		li a3,0
+		call PRINT
+		li a3, 1
+		call PRINT				
+		j MOVEU_FANTASMA_1
+	END_CHECK_IF_DESTROYED_GATE: ret
+
+
 	CHECK_IF_ARRIVED_DOOR:
 		la t0, CAUGHT_KEY
 		lb t1, 0(t0)
@@ -1298,31 +1429,37 @@ TIRO:
 		and a0, a0, a1
 		
 		
-		beq zero, a0, END_CHECK_CAUGHT_KEY
+		beq zero, a0, END_CHECK_ARRIVED_DOOR
 		
-		#la t1, LIFE
-		#lb t0, 0(t1)
-		#addi t0, t0, -1
-		#sb t0, 0(t1)
-		
-		#la t0, POSICAO_FANTASMA
-		#la a0, black_block
-		#lh a1, 0(t0)
-		#lh a2, 2(t0)
-		#mv a3,s0
-		
-		#call PRINT
-		#la t0, FANTASMA_VIVO
-		#sb zero, 0(t0)						
+								
 		j NEXT_FASE
-	END_CHECK_CAUGHT_KEY: ret
+	END_CHECK_ARRIVED_DOOR: ret
 
 
+##### MOVIMENTA FANTASMA 1 #######
+MOVER_FANTASMA_1:
+	la t1,GHOST_GATE_LIFES
+	lb t0, 0(t1)
+	ble t0, zero,   END_MOVER_FANTASMA_1
+	
 
-MOVER_FANTASMA:
-	la t0, FANTASMA_VIVO
+	la t0, FANTASMA_1_VIVO
 	lb t1,0(t0)
-	beq t1, zero, END_MOVER_FANTASMA
+	bne t1, zero, CONTINUE_MOVER_FANTASMA_1
+	la t0, POSICAO_FANTASMA_1
+	li t1,44
+	sh t1, 0(t0)
+	li t1,32
+	sh t1, 2(t0)
+	la t0,COUNTER_FANTASMA_1
+	lw t1, 0(t0)
+	addi t1, t1, 1
+	li t2,  1000
+	slt t3, t2, t1
+	sw t1, 0(t0)
+	la t0, FANTASMA_1_VIVO
+	sb t3, 0(t0)
+	j END_MOVER_FANTASMA_1
 	#la t0, COUNTER_FANTASMA
 	#lw t1, 0(t0)
 	#addi t1, t1, 1
@@ -1332,54 +1469,70 @@ MOVER_FANTASMA:
 	#bne t2, zero,END_MOVER_FANTASMA
 	#ebreak
 	#sw zero, 0(t0)
-	#ebreak
 	
+	CONTINUE_MOVER_FANTASMA_1:
+	la t0, COUNTER_FANTASMA_1
+	sb zero, 0(t0)
 	
-	
-	la t0, POSICAO_FANTASMA
-	la t3, ANTIGA_POSICAO_FANTASMA
+	la t0, POSICAO_FANTASMA_1
+	la t3, ANTIGA_POSICAO_FANTASMA_1
 	lh t1, 0(t0)
 	lh t2, 2(t0)
 	sh t1, 0(t3)
 	sh t2, 2(t3)
 	
-	la t0, POSICAO_FANTASMA
+	la t0, POSICAO_FANTASMA_1
 	lh t1, 0(t0)
 	li t2, 192
 	
-	lh t4, 2(t0)
-	blt t4, t2,DIR_FANTASMA_BAIXO ########
+	
 	
 	li t2, 192
-	bgt t1, t2, DIR_FANTASMA_ESQUERDA
+	bgt t1, t2, DIR_FANTASMA_1_ESQUERDA
 	li t2, 100
-	blt t1,t2, DIR_FANTASMA_DIREITA
+	blt t1,t2, DIR_FANTASMA_1_DIREITA
 	li t1, 'd'
-	la t3, DIR_FANTASMA
+	la t3, DIR_FANTASMA_1
 	lb t2, 0(t3)
-	beq t1, t2, MOVER_FANTASMA_DIREITA
-	DIR_FANTASMA_ESQUERDA:
-	la t4, DIR_FANTASMA
+	beq t1, t2, MOVER_FANTASMA_1_DIREITA
+	li t1, 's'
+	beq t1, t2, MOVER_FANTASMA_1_BAIXO
+	DIR_FANTASMA_1_ESQUERDA:
+	li t2, 160
+	lh t4, 2(t0)
+	blt t4, t2,DIR_FANTASMA_1_BAIXO 
+	
+	la t4, DIR_FANTASMA_1
 	li t5, 'a'
 	sb t5, 0(t4)
-	MOVER_FANTASMA_ESQUERDA:
-	la t0, POSICAO_FANTASMA
+	MOVER_FANTASMA_1_ESQUERDA:
+	la t0, POSICAO_FANTASMA_1
 	lh t1, 0(t0)
 	addi t1, t1, -4
 	sh t1, 0(t0)
-	j CONTINUA_FANTASMA
-	DIR_FANTASMA_DIREITA:
-	la t4, DIR_FANTASMA
+	j CONTINUA_FANTASMA_1
+	DIR_FANTASMA_1_DIREITA:
+	la t4, DIR_FANTASMA_1
 	li t5, 'd'
 	sb t5, 0(t4)
-	MOVER_FANTASMA_DIREITA:
-	la t0, POSICAO_FANTASMA
+	MOVER_FANTASMA_1_DIREITA:
+	la t0, POSICAO_FANTASMA_1
 	lh t1, 0(t0)
 	addi t1, t1, 4
 	sh t1, 0(t0)
-	j CONTINUA_FANTASMA
-	CONTINUA_FANTASMA:
-	la t0, POSICAO_FANTASMA
+	j CONTINUA_FANTASMA_1
+	DIR_FANTASMA_1_BAIXO:
+	la t4, DIR_FANTASMA_1
+	li t5, 's'
+	sb t5, 0(t4)
+	MOVER_FANTASMA_1_BAIXO:
+	la t0, POSICAO_FANTASMA_1
+	lh t1, 2(t0)
+	addi t1, t1, 4
+	sh t1, 2(t0)
+	j CONTINUA_FANTASMA_1
+	CONTINUA_FANTASMA_1:
+	la t0, POSICAO_FANTASMA_1
 	la a0, block
 	lh a1, 0(t0)
 	lh a2, 2(t0)
@@ -1389,7 +1542,7 @@ MOVER_FANTASMA:
 	
 	
 
-	la t0, ANTIGA_POSICAO_FANTASMA
+	la t0, ANTIGA_POSICAO_FANTASMA_1
 	la a0, black_block
 	lh a1, 0(t0)
 	lh a2, 2(t0)
@@ -1399,14 +1552,144 @@ MOVER_FANTASMA:
 	
 	call PRINT
 
-	call CHECK_IF_HIT_GHOST
+	call CHECK_IF_HIT_GHOST_1
 	
 	
 	
 
-END_MOVER_FANTASMA:j MOVEU_FANTASMA
+	END_MOVER_FANTASMA_1:
+		
+		j MOVEU_FANTASMA_1
 
+#### MOVIMENTA FANTASMA 2 ###
+MOVER_FANTASMA_2:
+	la t1,GHOST_GATE_LIFES
+	lb t0, 0(t1)
+	ble t0, zero,   END_MOVER_FANTASMA_2
+	
+	la t0, FANTASMA_2_VIVO
+	lb t1,0(t0)
+	bne t1, zero, CONTINUE_MOVER_FANTASMA_2
+	
+	la t0, POSICAO_FANTASMA_2
+	li t1,44
+	sh t1, 0(t0)
+	li t1,32
+	sh t1, 2(t0)
+	la t0,COUNTER_FANTASMA_2
+	lw t1, 0(t0)
+	addi t1, t1, 1
+	li t2,  1000
+	slt t3, t2, t1
+	sw t1, 0(t0)
+	la t0, FANTASMA_2_VIVO
+	sb t3, 0(t0)
+	j END_MOVER_FANTASMA_2
+	#la t0, COUNTER_FANTASMA
+	#lw t1, 0(t0)
+	#addi t1, t1, 1
+	#sw t1, 0(t0)
+	#li t2, 0x100
+	#rem t2,t1, t2
+	#bne t2, zero,END_MOVER_FANTASMA
+	#ebreak
+	#sw zero, 0(t0)
+	
+	CONTINUE_MOVER_FANTASMA_2:
+	la t0, COUNTER_FANTASMA_2
+	sb zero, 0(t0)
+	
+	la t0, POSICAO_FANTASMA_2
+	la t3, ANTIGA_POSICAO_FANTASMA_2
+	lh t1, 0(t0)
+	lh t2, 2(t0)
+	sh t1, 0(t3)
+	sh t2, 2(t3)
+	
+	la t0, POSICAO_FANTASMA_2
+	
+	lh t1, 0(t0)
+	li t2, 160
+	blt t1, t2, MOVER_FANTASMA_2_DIREITA
+	#ebreak
+	
+	
+	lh t1, 2(t0)
+	li t2, 204
+	bgt t1,t2, DIR_FANTASMA_2_CIMA
+	lh t1, 2(t0)
+	li t2, 24
+	ble t1, t2, DIR_FANTASMA_2_BAIXO
+	
+	la t3, DIR_FANTASMA_2
+	lb t2, 0(t3)
+	li t1, 'w'
+	beq t1, t2, MOVER_FANTASMA_2_CIMA
+	li t1, 'd'
+	beq t1, t2, MOVER_FANTASMA_2_DIREITA
+	beq zero, zero, MOVER_FANTASMA_2_BAIXO
+	li t1, 's'
+	beq t1, t2, MOVER_FANTASMA_2_BAIXO
+	
+	
+	DIR_FANTASMA_2_CIMA:
+	la t4, DIR_FANTASMA_2
+	li t5, 'w'
+	sb t5, 0(t4)
+	MOVER_FANTASMA_2_CIMA:
+	la t0, POSICAO_FANTASMA_2
+	lh t1, 2(t0)
+	addi t1, t1, -4
+	sh t1, 2(t0)
+	j CONTINUA_FANTASMA_2
+	DIR_FANTASMA_2_DIREITA:
+	la t4, DIR_FANTASMA_2
+	li t5, 'd'
+	sb t5, 0(t4)
+	MOVER_FANTASMA_2_DIREITA:
+	la t0, POSICAO_FANTASMA_2
+	lh t1, 0(t0)
+	addi t1, t1, 4
+	sh t1, 0(t0)
+	j CONTINUA_FANTASMA_2
+	DIR_FANTASMA_2_BAIXO:
+	la t4, DIR_FANTASMA_2
+	li t5, 's'
+	sb t5, 0(t4)
+	MOVER_FANTASMA_2_BAIXO:
+	la t0, POSICAO_FANTASMA_2
+	lh t1, 2(t0)
+	addi t1, t1, 4
+	sh t1, 2(t0)
+	j CONTINUA_FANTASMA_2
+	CONTINUA_FANTASMA_2:
+	la t0, POSICAO_FANTASMA_2
+	la a0, block
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	mv a3,s0
+	
+	call PRINT
+	
+	
 
+	la t0, ANTIGA_POSICAO_FANTASMA_2
+	la a0, black_block
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	mv a3,s0
+	xori a3, a3, 1
+	
+	
+	call PRINT
+
+	call CHECK_IF_HIT_GHOST_2
+	
+	
+	
+
+	END_MOVER_FANTASMA_2:
+		j MOVEU_FANTASMA_2
 
 
 
