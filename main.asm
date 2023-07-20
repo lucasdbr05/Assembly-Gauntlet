@@ -37,6 +37,21 @@ DIR_FANTASMA_1: .byte 'd'
 COUNTER_FANTASMA_1:.word 0
 ##########
 
+#####FANTASMA 2######
+POSICAO_FANTASMA_2: .half 44,32
+ANTIGA_POSICAO_FANTASMA_2: .half 0,0
+FANTASMA_2_VIVO: .byte 1
+DIR_FANTASMA_2: .byte 'd'
+COUNTER_FANTASMA_2:.word 0
+##########
+
+#####FANTASMA 3######
+POSICAO_FANTASMA_3: .half 44,32
+ANTIGA_POSICAO_FANTASMA_3: .half 0,0
+FANTASMA_3_VIVO: .byte 1
+DIR_FANTASMA_3: .byte 'd'
+COUNTER_FANTASMA_3:.word 0
+##########
 
 
 TEST: .word 0x0000FFFF
