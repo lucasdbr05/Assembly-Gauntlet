@@ -2,16 +2,19 @@
 FASE_1: .string "FASE 1"
 
 
+
 POSICAO_PERSONAGEM: .half 160,80
 ANTIGA_POSICAO_PERSONAGEM: .half 160,80
 
-KEY_POSITION: .half 180, 200
+KEY_POSITION: .half 20, 20
 CAUGHT_KEY: .byte 0
 
 POSICAO_TIRO: .half 0,0
 ANTIGA_POSICAO_TIRO:.half 0,0
 DIR_PERSONAGEM : .byte ' '
 
+
+POSICAO_PORTAL: .half 180,40
 
 LIFE_MSG: .string "LIFE: "
 LIFE: .byte 5
@@ -20,9 +23,14 @@ PONTOS_MSG: .string "SCORE: "
 PONTOS: .word 1000000
 
 
+######## SAIDA DE FANTASMAS######
+POSICAO_GHOST_GATE: .half 28,32
+GHOST_GATE_LIFES: .byte 5
+#################################
+
 #####FANTASMA 1######
-POSICAO_FANTASMA: .half 140,180
-ANTIGA_POSICAO_FANTASMA: .half 112,180
+POSICAO_FANTASMA: .half 44,32
+ANTIGA_POSICAO_FANTASMA: .half 0,0
 FANTASMA_VIVO: .byte 1
 DIR_FANTASMA: .byte 'd'
 COUNTER_FANTASMA:.word 0X00000000
@@ -34,6 +42,7 @@ TEST: .word 0x0000FFFF
 
 
 .include "key.data"
+.include "portal.data"
 #.include "matrix_test.data"
 .include "test_mapa.data"
 .include "lower_block.data"
@@ -48,7 +57,7 @@ TEST: .word 0x0000FFFF
 .include "sprite16x16.data"
 .include "mapa_3.data"
 .include "matrix3.data"
-
+.include "ghost_gate.data"
 
 .text
 
@@ -60,6 +69,16 @@ MAPA:
 	call PRINT
 	li a3, 1
 	call PRINT  #FUNDO NO FRAME 1
+	
+	la a0, ghost_gate
+	la t0, POSICAO_GHOST_GATE
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	li a3, 0
+	call PRINT
+	li a3,1
+	call PRINT
+	
 	
 	
 	li a7,104
@@ -252,7 +271,16 @@ GAME_LOOP:
 	
 	xori a3, a3,1
 	call PRINT
-
+	
+	la t0, POSICAO_PORTAL
+	la a0, portal
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	mv a3, s0
+	
+	call PRINT
+	
+	call CHECK_IF_ARRIVED_DOOR
 
 	
 	j GAME_LOOP
@@ -1219,6 +1247,75 @@ TIRO:
 		sb zero, 0(t0)						
 		j GAME_LOOP
 	END_CHECK_HIT_GHOST: ret
+	
+	
+	
+	
+	CHECK_IF_ARRIVED_DOOR:
+		la t0, CAUGHT_KEY
+		lb t1, 0(t0)
+		bne zero, t1, 	CONTINUE_CHECK_IF_ARRIVED_DOOR
+		ret
+		
+		CONTINUE_CHECK_IF_ARRIVED_DOOR:
+		
+		la t0, POSICAO_PERSONAGEM
+		la t1, POSICAO_PORTAL
+		
+		lh t2, 0(t0)
+		lh t3, 0(t1)
+		addi t2, t2, -1
+		slt t5, t2, t3
+		addi t2, t2, 17
+		slt t6, t3, t2
+		and t5, t5, t6
+		addi t2, t2, -17
+		slt t6, t2, t3
+		addi t3, t3, 16
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t6, t4
+		or t5, t5, t4
+		mv a1, t5
+		
+		lh t2, 2(t0)
+		lh t3, 2(t1)
+		addi t2, t2, -1
+		slt t5, t2, t3
+		addi t2, t2, 17
+		slt t6, t3, t2
+		and t5, t5, t6
+		addi t2, t2, -17
+		slt t6, t2, t3
+		addi t3, t3, 4
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t6, t4
+		or t5, t5, t4
+		
+		mv a0, t5
+		
+		and a0, a0, a1
+		
+		
+		beq zero, a0, END_CHECK_CAUGHT_KEY
+		
+		#la t1, LIFE
+		#lb t0, 0(t1)
+		#addi t0, t0, -1
+		#sb t0, 0(t1)
+		
+		#la t0, POSICAO_FANTASMA
+		#la a0, black_block
+		#lh a1, 0(t0)
+		#lh a2, 2(t0)
+		#mv a3,s0
+		
+		#call PRINT
+		#la t0, FANTASMA_VIVO
+		#sb zero, 0(t0)						
+		j NEXT_FASE
+	END_CHECK_CAUGHT_KEY: ret
 
 
 
@@ -1250,6 +1347,10 @@ MOVER_FANTASMA:
 	lh t1, 0(t0)
 	li t2, 192
 	
+	lh t4, 2(t0)
+	blt t4, t2,DIR_FANTASMA_BAIXO ########
+	
+	li t2, 192
 	bgt t1, t2, DIR_FANTASMA_ESQUERDA
 	li t2, 100
 	blt t1,t2, DIR_FANTASMA_DIREITA
@@ -1300,7 +1401,8 @@ MOVER_FANTASMA:
 
 	call CHECK_IF_HIT_GHOST
 	
-
+	
+	
 
 END_MOVER_FANTASMA:j MOVEU_FANTASMA
 
@@ -1421,6 +1523,12 @@ PRINT_TIRO.Line:
 	blt t2, t5, PRINT_TIRO.Line
 	ret
 
+
 	
+		
+NEXT_FASE:
+	li a7, 10
+	ecall
+		
 		
 .include "../SYSTEMv21.s"	
