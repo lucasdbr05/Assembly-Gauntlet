@@ -24,11 +24,6 @@ PONTOS_MSG: .string "SCORE: "
 PONTOS: .word 1000000
 
 
-######## SAIDA DE FANTASMAS######
-VIDAS_GHOST_GATE:.string "GHOST GATE"
-POSICAO_GHOST_GATE: .half 28,32
-GHOST_GATE_LIFES: .byte 5
-#################################
 
 #####FANTASMA 1######
 POSICAO_ATIRADOR_1: .half 88,12
@@ -36,32 +31,33 @@ POSICAO_TIRO1_A1: .half 92,36,1
 ANTIGA_POSICAO_TIRO1_A1: .half 108,36
 POSICAO_TIRO2_A1: .half 92,36,0
 ANTIGA_POSICAO_TIRO2_A1: .half 108,36
+VIDAS_A1:.string "ATIRADOR 1:"
 ATIRADOR_1_VIVO: .byte 5
-
 ##########
 
 #####FANTASMA 2######
-POSICAO_FANTASMA_2: .half 44,32
-POSICAO_TIRO1_A2: .half 108,36,0
-POSICAO_TIRO2_A2: .half 108,36,0
+POSICAO_ATIRADOR_2: .half 8,64   ##120, 164
+POSICAO_TIRO1_A2: .half 32,64,1
+ANTIGA_POSICAO_TIRO1_A2: .half 108,36
+POSICAO_TIRO2_A2: .half 32,64,0
+ANTIGA_POSICAO_TIRO2_A2: .half 108,36
+VIDAS_A2:.string "ATIRADOR 2:"
 ATIRADOR_2_VIVO: .byte 5
-
 ##########
 
 #####FANTASMA 3######
-POSICAO_FANTASMA_3: .half 44,32
-POSICAO_TIRO1_A3: .half 108,36,0
-POSICAO_TIRO2_A3: .half 108,36,0
+POSICAO_ATIRADOR_3: .half 92,164
+POSICAO_TIRO1_A3: .half 88,172,1
+ANTIGA_POSICAO_TIRO1_A3: .half 108,36
+POSICAO_TIRO2_A3: .half 88,172,0
+ANTIGA_POSICAO_TIRO2_A3: .half 108,36
+VIDAS_A3:.string "ATIRADOR 3:"
 ATIRADOR_3_VIVO: .byte 5
-
 ##########
+
 CURRENT_CHECKED_TIRO:.byte 0
 
-TEST: .word 0x0000FFFF
-
-
-
-
+TEST: .word 0x0000FFF
 
 
 .include "key.data"
@@ -190,21 +186,6 @@ TEST: .word 0x0000FFFF
 	li a4,1
 	ecall
 	
-	li a7,104
-	la a0,VIDAS_GHOST_GATE
-	li a1,220
-	li a2,150
-	li a3,0x0038
-	li a4,0
-	ecall
-	
-	li a7,104
-	la a0,VIDAS_GHOST_GATE
-	li a1,220
-	li a2,150
-	li a3,0x0038
-	li a4,1
-	ecall
 	
 	la t0, POSICAO_ATIRADOR_1
 	la a0, block
@@ -215,6 +196,23 @@ TEST: .word 0x0000FFFF
 	li a3, 1
 	call PRINT
 	
+	la t0, POSICAO_ATIRADOR_2
+	la a0, block
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	li a3, 0
+	call PRINT
+	li a3, 1
+	call PRINT
+	
+	la t0, POSICAO_ATIRADOR_3
+	la a0, block
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	li a3, 0
+	call PRINT
+	li a3, 1
+	call PRINT
 	
 	j GAME_LOOP
 	
@@ -271,39 +269,7 @@ GAME_LOOP:
 	ecall
 	
 	
-	la t1,GHOST_GATE_LIFES
-	lb t0, 0(t1)
-	li a7,101
-	mv a0,t0
-	li a1,280
-	li a2,170
-	li a3,0x0038
-	li a4,0
-	ecall
 	
-	la t1,GHOST_GATE_LIFES
-	lb t0, 0(t1)
-	li a7,101
-	mv a0,t0
-	li a1,280
-	li a2,170
-	li a3,0x0038
-	li a4,1
-	ecall
-	
-	la t1, GHOST_GATE_LIFES
-	lb t0, 0(t1)
-	ble  t0, zero, DONT_PRINT_GATE
-	la a0, ghost_gate
-	la t0, POSICAO_GHOST_GATE
-	lh a1, 0(t0)
-	lh a2, 2(t0)
-	li a3, 0
-	call PRINT
-	li a3,1
-	call PRINT
-	DONT_PRINT_GATE:
-	 
 	 la t1,LIFE
 	lb t0, 0(t1)
 	li a7,101
@@ -349,25 +315,7 @@ GAME_LOOP:
 	ecall
 	
 	
-	la t1,GHOST_GATE_LIFES
-	lb t0, 0(t1)
-	li a7,101
-	mv a0,t0
-	li a1,280
-	li a2,170
-	li a3,0x0038
-	li a4,0
-	ecall
 	
-	la t1,GHOST_GATE_LIFES
-	lb t0, 0(t1)
-	li a7,101
-	mv a0,t0
-	li a1,280
-	li a2,170
-	li a3,0x0038
-	li a4,1
-	ecall
 	
 	 
 	xori s0, s0, 1  #modifica os frames ente 0 e 1
@@ -398,19 +346,20 @@ GAME_LOOP:
 	
 	
 	
-	
+##### ATIRA #######	
 	call ATIRA_T2A1
 	ATIROU_T2A1:
 	call ATIRA_T1A1
 	ATIROU_T1A1:
-	
-	
-	#j MOVER_FANTASMA_3
-	#MOVEU_FANTASMA_3:	
-	#j MOVER_FANTASMA_2
-	#MOVEU_FANTASMA_2:
-	#j MOVER_FANTASMA_1
-	#MOVEU_FANTASMA_1:
+	call ATIRA_T2A2
+	ATIROU_T2A2:
+	call ATIRA_T1A2
+	ATIROU_T1A2:
+	call ATIRA_T2A3
+	ATIROU_T2A3:
+	call ATIRA_T1A3
+	ATIROU_T1A3:
+#################################
 	
 	
 	
@@ -1160,8 +1109,14 @@ CHECK_IF_HIT_PERS:
 	beq t1, t2, IS_T1
 	li t2, 2
 	beq t1, t2, IS_T2
-		
-	
+	li t2, 3
+	beq t1, t2, IS_T3
+	li t2, 4
+	beq t1, t2, IS_T4	
+	li t2, 5
+	beq t1, t2, IS_T5
+	li t2, 6
+	beq t1, t2, IS_T6
 						
 	IS_T1:
 	la a5, POSICAO_TIRO1_A1	
@@ -1169,10 +1124,20 @@ CHECK_IF_HIT_PERS:
 	IS_T2:
 	la a5, POSICAO_TIRO2_A1	
 	j CONTINUE_CHECK_HIT_PERS
-	
+	IS_T3:
+	la a5, POSICAO_TIRO1_A2	
+	j CONTINUE_CHECK_HIT_PERS
+	IS_T4:
+	la a5, POSICAO_TIRO2_A2
+	j CONTINUE_CHECK_HIT_PERS
+	IS_T5:
+	la a5, POSICAO_TIRO1_A3	
+	j CONTINUE_CHECK_HIT_PERS
+	IS_T6:
+	la a5, POSICAO_TIRO2_A3
+	j CONTINUE_CHECK_HIT_PERS
 				
 	CONTINUE_CHECK_HIT_PERS:
-		
 		la t0, POSICAO_PERSONAGEM
 		mv t1, a5
 		
@@ -1402,12 +1367,369 @@ ATIRA_T2A1:
 		li t1, 2
 		sb t1, 0(t0)
 		
-		call CHECK_IF_HIT_PERS
+		#call CHECK_IF_HIT_PERS
 				
 		j ATIROU_T2A1
 	END_CHECK_ATIRA_T2A1:
 	j ATIROU_T2A1					
 
+		
+ATIRA_T1A2:
+		la t1, POSICAO_TIRO1_A2
+		lh a1, 0(t1)
+		lh a2, 2(t1)
+		la a0, erase_tiro
+		li a3,0
+		call PRINT
+		li a3,1 
+		call PRINT
+		la t0, POSICAO_TIRO1_A2
+		lb t1, 4(t0)
+		bne zero, t1, CONTINUE_CHECK_TIRO_1A2
+	
+		li a1, 32
+		li a2, 64
+		sh a1, 0(t0)
+		sh a2, 2(t0)
+		li t3, 1    
+		sh t3, 4(t0)
+		#la t0, ATIRADOR_1_VIVO
+		#lb t1, 0(t0)
+		#bne zero, t1, 	CONTINUE_CHECK_TIRO_1
+		j ATIROU_T1A2
+		
+		CONTINUE_CHECK_TIRO_1A2:
+		la t0, POSICAO_PERSONAGEM
+		la t1, POSICAO_ATIRADOR_2
+		lh t2, 2(t0)
+		lh t3, 2(t1)
+		addi t3, t3, -2
+		slt t5, t2,t3
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t5, t5, t4
+		addi t3, t3, 8
+		addi t2, t2, -17
+		addi t3, t3, 16
+		slt t6, t2,t3
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t4, t6
+		or t5, t4, t5
+		
+		mv a0, t5
+		
+		beq zero, a0, END_CHECK_ATIRA_T1A2
+		la t0, POSICAO_TIRO1_A2
+		la t1, ANTIGA_POSICAO_TIRO1_A2
+		
+		la a0, tiro
+		lh a1, 0(t0)
+		lh a2, 2(t0)
+		li t2, 84
+		blt a1,t2, DONT_UPDATE_T2A2
+	
+		la t3, POSICAO_TIRO2_A2
+		li t4, 1
+		sb t4, 4(t3)
+		DONT_UPDATE_T2A2:
+		li t2, 164
+		ble a1, t2 , T1A2_IS_VALID
+		li a1,32
+		li a2, 64
+		sh a1, 0(t0)
+		sh a2, 2(t0)	
+		j ATIROU_T1A2
+		T1A2_IS_VALID:
+		sh a1, 0(t1)
+		sh a2, 2(t1)
+		addi a1, a1, 4
+		sh a1, 0(t0)
+		mv a3,s0
+		call PRINT
+		
+		la t1, ANTIGA_POSICAO_TIRO1_A2
+		lh a1, 0(t1)
+		lh a2, 2(t1)
+		la a0, erase_tiro
+		xori a3, a3, 1
+		call PRINT
+		
+		la t0, CURRENT_CHECKED_TIRO
+		li t1, 3
+		sb t1, 0(t0)
+		
+		call CHECK_IF_HIT_PERS
+				
+		j ATIROU_T1A2
+	END_CHECK_ATIRA_T1A2:
+	j ATIROU_T1A2
+ATIRA_T2A2:
+		la t1, POSICAO_TIRO2_A2
+		lh a1, 0(t1)
+		lh a2, 2(t1)
+		la a0, erase_tiro
+		li a3,0
+		call PRINT
+		li a3,1 
+		call PRINT
+		la t0, POSICAO_TIRO2_A2
+		lb t1, 4(t0)
+		bne zero, t1, CONTINUE_CHECK_TIRO_2A2
+		li a1,32
+		li a2, 64
+		la t0, POSICAO_TIRO2_A2
+		sh a1, 0(t0)
+		sh a2, 2(t0)
+		
+		#li a1,92
+		#li a2, 36
+		#sh a1, 0(t0)
+		#sh a2, 2(t0)
+		#li t3, 1
+		#sh t3, 4(t0)
+		#la t0, ATIRADOR_1_VIVO
+		#lb t1, 0(t0)
+		#bne zero, t1, 	CONTINUE_CHECK_TIRO_1
+		j ATIROU_T2A2
+		
+		CONTINUE_CHECK_TIRO_2A2:
+		la t0, POSICAO_PERSONAGEM
+		la t1, POSICAO_ATIRADOR_2
+		lh t2, 2(t0)
+		lh t3, 2(t1)
+		addi t3, t3, -2
+		slt t5, t2,t3
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t5, t5, t4
+		addi t3, t3, 8
+		addi t2, t2, -17
+		addi t3, t3, 16
+		slt t6, t2,t3
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t4, t6
+		or t5, t4, t5
+		
+		mv a0, t5
+		
+		beq zero, a0, END_CHECK_ATIRA_T2A2
+		la t0, POSICAO_TIRO2_A2
+		la t1, ANTIGA_POSICAO_TIRO2_A2
+		
+		la a0, tiro
+		lh a1, 0(t0)
+		lh a2, 2(t0)
+		li t2, 164
+		ble a1, t2 , T2A2_IS_VALID
+		li a1,32
+		li a2, 64
+		sh a1, 0(t0)
+		sh a2, 2(t0)	
+		j ATIROU_T2A2
+		T2A2_IS_VALID:
+		sh a1, 0(t1)
+		sh a2, 2(t1)
+		addi a1, a1, 4
+		sh a1, 0(t0)
+		mv a3,s0
+		call PRINT
+		
+		la t1, ANTIGA_POSICAO_TIRO2_A2
+		lh a1, 0(t1)
+		lh a2, 2(t1)
+		la a0, erase_tiro
+		xori a3, a3, 1
+		call PRINT
+		
+		la t0, CURRENT_CHECKED_TIRO
+		li t1, 4
+		sb t1, 0(t0)
+		
+		call CHECK_IF_HIT_PERS
+				
+		j ATIROU_T2A2
+	END_CHECK_ATIRA_T2A2:
+	j ATIROU_T2A2		
+ATIRA_T1A3:
+		la t1, POSICAO_TIRO1_A3
+		lh a1, 0(t1)
+		lh a2, 2(t1)
+		la a0, erase_tiro
+		li a3,0
+		call PRINT
+		li a3,1 
+		call PRINT
+		la t0, POSICAO_TIRO1_A3
+		lb t1, 4(t0)
+		bne zero, t1, CONTINUE_CHECK_TIRO_1A3
+	
+		li a1, 88
+		li a2, 172
+		sh a1, 0(t0)
+		sh a2, 2(t0)
+		li t3, 1    
+		sh t3, 4(t0)
+		#la t0, ATIRADOR_1_VIVO
+		#lb t1, 0(t0)
+		#bne zero, t1, 	CONTINUE_CHECK_TIRO_1
+		j ATIROU_T1A3
+		
+		CONTINUE_CHECK_TIRO_1A3:
+		
+		la t0, POSICAO_PERSONAGEM
+		la t1, POSICAO_ATIRADOR_3
+		lh t2, 2(t0)
+		lh t3, 2(t1)
+		addi t3, t3, -2
+		slt t5, t2,t3
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t5, t5, t4
+#		addi t3, t3, 8
+		addi t2, t2, -17
+		addi t3, t3, 16
+		slt t6, t2,t3
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t4, t6
+		or t5, t4, t5
+		
+		mv a0, t5
+		
+		beq zero, a0, END_CHECK_ATIRA_T1A3
+		la t0, POSICAO_TIRO1_A3
+		la t1, ANTIGA_POSICAO_TIRO1_A3
+		la a0, tiro
+		lh a1, 0(t0)
+		lh a2, 2(t0)
+		li t2, 76
+		bgt a1,t2, DONT_UPDATE_T2A3
+	
+		la t3, POSICAO_TIRO2_A3
+		li t4, 1
+		sb t4, 4(t3)
+		DONT_UPDATE_T2A3:
+		li t2, 46
+		bgt a1, t2 , T1A3_IS_VALID
+		li a1,88
+		li a2, 172
+		sh a1, 0(t0)
+		sh a2, 2(t0)	
+		j ATIROU_T1A3
+		T1A3_IS_VALID:
+		sh a1, 0(t1)
+		sh a2, 2(t1)
+		addi a1, a1, -4
+		sh a1, 0(t0)
+		mv a3,s0
+		call PRINT
+		
+		la t1, ANTIGA_POSICAO_TIRO1_A3
+		lh a1, 0(t1)
+		lh a2, 2(t1)
+		la a0, erase_tiro
+		xori a3, a3, 1
+		call PRINT
+		
+		la t0, CURRENT_CHECKED_TIRO
+		li t1, 5
+		sb t1, 0(t0)
+		
+		call CHECK_IF_HIT_PERS
+				
+		j ATIROU_T1A3
+	END_CHECK_ATIRA_T1A3:
+	j ATIROU_T1A3
+ATIRA_T2A3:
+		la t1, POSICAO_TIRO2_A3
+		lh a1, 0(t1)
+		lh a2, 2(t1)
+		la a0, erase_tiro
+		li a3,0
+		call PRINT
+		li a3,1 
+		call PRINT
+		la t0, POSICAO_TIRO2_A3
+		lb t1, 4(t0)
+		bne zero, t1, CONTINUE_CHECK_TIRO_2A3
+		li a1,88
+		li a2, 172
+		la t0, POSICAO_TIRO2_A3
+		sh a1, 0(t0)
+		sh a2, 2(t0)
+		
+		#li a1,88
+		#li a2, 36
+		#sh a1, 0(t0)
+		#sh a2, 2(t0)
+		#li t3, 1
+		#sh t3, 4(t0)
+		#la t0, ATIRADOR_1_VIVO
+		#lb t1, 0(t0)
+		#bne zero, t1, 	CONTINUE_CHECK_TIRO_1
+		j ATIROU_T2A3
+		
+		CONTINUE_CHECK_TIRO_2A3:
+		la t0, POSICAO_PERSONAGEM
+		la t1, POSICAO_ATIRADOR_3
+		lh t2, 2(t0)
+		lh t3, 2(t1)
+		addi t3, t3, -2
+		slt t5, t2,t3
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t5, t5, t4
+#		addi t3, t3, 4
+		addi t2, t2, -17
+		addi t3, t3, 16
+		slt t6, t2,t3
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t4, t6
+		or t5, t4, t5
+		
+		mv a0, t5
+		
+		beq zero, a0, END_CHECK_ATIRA_T2A3
+		la t0, POSICAO_TIRO2_A3
+		la t1, ANTIGA_POSICAO_TIRO2_A3
+		
+		la a0, tiro
+		lh a1, 0(t0)
+		lh a2, 2(t0)
+		li t2, 46
+		bgt a1, t2 , T2A3_IS_VALID
+		li a1,88
+		li a2, 172
+		sh a1, 0(t0)
+		sh a2, 2(t0)	
+		j ATIROU_T2A3
+		T2A3_IS_VALID:
+		sh a1, 0(t1)
+		sh a2, 2(t1)
+		addi a1, a1, -4
+		sh a1, 0(t0)
+		mv a3,s0
+		call PRINT
+		
+		la t1, ANTIGA_POSICAO_TIRO2_A3
+		lh a1, 0(t1)
+		lh a2, 2(t1)
+		la a0, erase_tiro
+		xori a3, a3, 1
+		call PRINT
+		
+		la t0, CURRENT_CHECKED_TIRO
+		li t1, 6
+		sb t1, 0(t0)
+		
+		call CHECK_IF_HIT_PERS
+				
+		j ATIROU_T2A3
+	END_CHECK_ATIRA_T2A3:
+	j ATIROU_T2A3	
 
 #a0 = endereco_imagem
 #a1 = x
