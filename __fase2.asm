@@ -2,20 +2,20 @@
 
 FASE_2: .string "FASE 2"
 
-
-
-POSICAO_PERSONAGEM: .half 180,70
+POSICAO_PERSONAGEM: .half 32,22
 ANTIGA_POSICAO_PERSONAGEM: .half 160,80
+sprite: .word 0x00000000
+DIR_PERSONAGEM : .byte 'd'
 
-KEY_POSITION: .half 20, 20
+KEY_POSITION: .half 24, 200
 CAUGHT_KEY: .byte 0
 
 POSICAO_TIRO: .half 0,0
 ANTIGA_POSICAO_TIRO:.half 0,0
-DIR_PERSONAGEM : .byte ' '
 
 
-POSICAO_PORTAL: .half 40,112
+
+POSICAO_PORTAL: .half 148,80
 
 LIFE_MSG: .string "LIFE: "
 LIFE: .byte 5
@@ -56,12 +56,12 @@ ATIRADOR_3_VIVO: .byte 5
 ##########
 
 CURRENT_CHECKED_TIRO:.byte 0
+CURRENT_CHECKED_AT: .byte 0
 
-TEST: .word 0x0000FFF
 
 
 .include "key.data"
-.include "portal.data"
+
 .include "lower_block.data"
 .include "block.s"
 .include "tiro.data"
@@ -72,9 +72,16 @@ TEST: .word 0x0000FFF
 .include "matrix2.data"
 .include "ghost_gate.data"
 .include "../MACROSv21.s"
-	
-	
-	
+.include "sprites/personagem_direita.data"
+.include "sprites/personagem_esquerda.data"
+.include "sprites/personagem_frente.data"
+.include "sprites/personagem_costas.data"
+.include "sprites/porta.data"
+.include "sprites/inimigo_baixo.data"
+.include "sprites/inimigo_cima.data"
+.include "sprites/inimigo_direita.data"
+.include "sprites/inimigo_esquerda.data"
+
 
 .text
 	li t1,0xFF000000	# endereco inicial da Memoria VGA - Frame 0
@@ -93,9 +100,6 @@ TEST: .word 0x0000FFF
 	call PRINT
 	li a3, 1
 	call PRINT  #FUNDO NO FRAME 1
-	
-	
-	
 	
 	li a7,104
 	la a0,FASE_2
@@ -224,6 +228,43 @@ GAME_LOOP:
 	call INPUT #PROCEDIMENTO QUE CHECA SE HÁ ALGUM BOTÃO QUE FOI APERTADO
 	 #s0: frame a ser escolhido
 	
+	####### DIRECAO DA SPRITE DO PERSONAGEM ######	
+	la t1, DIR_PERSONAGEM
+	lb t2, 0(t1)
+	li t0, 'w'
+	beq t2, t0, DIR_S_UP #move para cima
+	li t0, 'a'
+	beq t2, t0, DIR_S_LEFT  #move para esquerda
+	li t0, 's'
+	beq t2, t0,  DIR_S_DOWN   #move para  baixo
+	li t0, 'd'
+	beq t2, t0,  DIR_S_RIGHT   #move para	 direit
+	
+	
+	DIR_S_UP:
+	la t1, sprite
+	la t2, personagem_up
+	sw t2, 0(t1)
+	j END_DIRS
+	DIR_S_DOWN:
+	la t1, sprite
+	la t2, personagem_down
+	sw t2, 0(t1)
+	j END_DIRS
+	DIR_S_LEFT:
+	la t1, sprite
+	la t2, personagem_left
+	sw t2, 0(t1)
+	j END_DIRS
+	DIR_S_RIGHT:
+	la t1, sprite
+	la t2, personagem_right
+	sw t2, 0(t1)
+	j END_DIRS
+	
+	END_DIRS:
+	#########
+	
 	la t1,LIFE
 	lb t0, 0(t1)
 	li a7,101
@@ -321,7 +362,8 @@ GAME_LOOP:
 	xori s0, s0, 1  #modifica os frames ente 0 e 1
 	
 	la t0, POSICAO_PERSONAGEM  
-	la a0, sprite16x16  #imagem a ser carregada
+	la t2, sprite
+	lw a0, 0(t2)  #imagem a ser carregada
 	lh a1, 0(t0)   #posição x do personagem
 	lh a2, 2(t0)    #posição y do personagem
 	mv a3, s0        #frame
@@ -393,9 +435,9 @@ GAME_LOOP:
 	lh a2, 2(t0)
 	mv a3, s0
 	
-	#call PRINT
+	call PRINT
 	
-	#call CHECK_IF_ARRIVED_DOOR
+	call CHECK_IF_ARRIVED_DOOR
 
 	
 	j GAME_LOOP
@@ -886,11 +928,20 @@ TIRO:
 		li t0, 16
 		blt a2, t0, GAME_LOOP
 		
+		la t0, CURRENT_CHECKED_AT
+		li t1, 1
+		li t5, 1
+		sb t1, 0(t0)
+		call CHECK_IF_KILLED_ATIRADOR
+		li t1, 2
+		li t5, 2
+		sb t1, 0(t0)
+		call CHECK_IF_KILLED_ATIRADOR
+		li t1, 3
+		li t5, 3
+		sb t1, 0(t0)
+		call CHECK_IF_KILLED_ATIRADOR
 		
-		#call CHECK_IF_KILLED_GHOST_1
-		#call CHECK_IF_KILLED_GHOST_2
-		#call CHECK_IF_KILLED_GHOST_3
-		#call CHECK_IF_DESTROYED_GATE
 		j  LOOP_PRINT_TIRO_UP
 		END_TIRO_UP: ret
 		
@@ -954,10 +1005,19 @@ TIRO:
 		li t0, 210
 		bgt a2, t0, GAME_LOOP
 		
-		#call CHECK_IF_KILLED_GHOST_1
-		#call CHECK_IF_KILLED_GHOST_2
-		#call CHECK_IF_KILLED_GHOST_3
-		#call CHECK_IF_DESTROYED_GATE
+		la t0, CURRENT_CHECKED_AT
+		li t1, 1
+		li t5, 1
+		sb t1, 0(t0)
+		call CHECK_IF_KILLED_ATIRADOR
+		li t1, 2
+		li t5, 2
+		sb t1, 0(t0)
+		call CHECK_IF_KILLED_ATIRADOR
+		li t1, 3
+		li t5, 3
+		sb t1, 0(t0)
+		call CHECK_IF_KILLED_ATIRADOR
 		j LOOP_PRINT_TIRO_DOWN
 		END_TIRO_DOWN: ret
 		
@@ -1025,10 +1085,19 @@ TIRO:
 		bge a1, t0, GAME_LOOP
 		
 
-		#call CHECK_IF_KILLED_GHOST_1
-		#call CHECK_IF_KILLED_GHOST_2
-		#call CHECK_IF_KILLED_GHOST_3
-		#call CHECK_IF_DESTROYED_GATE
+		la t0, CURRENT_CHECKED_AT
+		li t1, 1
+		li t5, 1
+		sb t1, 0(t0)
+		call CHECK_IF_KILLED_ATIRADOR
+		li t1, 2
+		li t5, 2
+		sb t1, 0(t0)
+		call CHECK_IF_KILLED_ATIRADOR
+		li t1, 3
+		li t5, 3
+		sb t1, 0(t0)
+		call CHECK_IF_KILLED_ATIRADOR
 		j LOOP_PRINT_TIRO_RIGHT
 		END_TIRO_RIGHT: ret
 		
@@ -1091,16 +1160,116 @@ TIRO:
 		li t0, 16
 		blt a1, t0,GAME_LOOP
 		
-		#ebreak
-		#call CHECK_IF_KILLED_GHOST_1
-		#call CHECK_IF_KILLED_GHOST_2
-		#call CHECK_IF_KILLED_GHOST_3	
-		#call CHECK_IF_DESTROYED_GATE
+		la t0, CURRENT_CHECKED_AT
+		li t1, 1
+		li t5, 1
+		sb t1, 0(t0)
+		call CHECK_IF_KILLED_ATIRADOR
+		li t1, 2
+		li t5, 2
+		sb t1, 0(t0)
+		call CHECK_IF_KILLED_ATIRADOR
+		li t1, 3
+		li t5, 3
+		sb t1, 0(t0)
+		call CHECK_IF_KILLED_ATIRADOR
 		
 		
 		j LOOP_PRINT_TIRO_LEFT
 		END_TIRO_LEFT: ret
 ret
+
+CHECK_IF_KILLED_ATIRADOR:
+
+		la t0, CURRENT_CHECKED_AT
+		lb t1, 0(t0)
+		mv t1, t5
+		li t2, 1
+		beq t2, t1, IS_A1
+		li t2, 2
+		beq t2, t1, IS_A2
+		li t2, 3
+		beq t2, t1, IS_A3
+		
+		IS_A1:
+		la a4, POSICAO_ATIRADOR_1
+		la a5, ATIRADOR_1_VIVO
+		j INIT_IF_KILLED
+		IS_A2:
+		la a4, POSICAO_ATIRADOR_2
+		la a5, ATIRADOR_2_VIVO
+		j INIT_IF_KILLED
+		IS_A3:
+		la a4, POSICAO_ATIRADOR_3
+		la a5, ATIRADOR_3_VIVO
+		j INIT_IF_KILLED
+		
+		
+		
+		INIT_IF_KILLED:
+		mv t0, a5
+		lb t1, 0(t0)
+		bgt t1, zero, 	CONTINUE_CHECK_IF_KILLED_ATIRADOR
+		sb zero, 0(t0)
+		ret
+	
+		CONTINUE_CHECK_IF_KILLED_ATIRADOR:
+		mv t0, a4
+		la t1, POSICAO_TIRO
+		
+		lh t2, 0(t0)
+		lh t3, 0(t1)
+		addi t2, t2, -1
+		slt t5, t2, t3
+		addi t2, t2, 17
+		slt t6, t3, t2
+		and t5, t5, t6
+		addi t2, t2, -17
+		slt t6, t2, t3
+		addi t3, t3, 4
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t6, t4
+		or t5, t5, t4
+		
+		mv a1, t5
+		lh t2, 2(t0)
+		lh t3, 2(t1)
+		addi t2, t2, -1
+		slt t5, t2, t3
+		addi t2, t2, 17
+		slt t6, t3, t2
+		and t5, t5, t6
+		addi t2, t2, -17
+		slt t6, t2, t3
+		addi t3, t3, 4
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t6, t4
+		or t5, t5, t4
+		
+		mv a0, t5
+		
+		and a0, a0, a1
+		
+		#ebreak
+		beq zero, a0, END_CHECK_ATIRADOR
+		mv t0, a5
+		lb t1, 0(t0)
+		addi t1, t1, -1
+		sb t1, 0(t0)
+		bgt t1, zero, GAME_LOOP
+		mv t0, a4
+		la a0, black_block
+		lh a1, 0(t0)
+		lh a2, 2(t0)
+		li a3,1
+		call PRINT
+		li a3, 0
+		call PRINT
+								
+		j GAME_LOOP
+	END_CHECK_ATIRADOR: ret
 
 CHECK_IF_HIT_PERS:
 	la t0, CURRENT_CHECKED_TIRO
@@ -1197,7 +1366,59 @@ CHECK_IF_HIT_PERS:
 		sb zero, 4(t0)						
 		j AUX_GAME_LOOP
 	END_CHECK_HIT_TIRO: ret			
+	CHECK_IF_ARRIVED_DOOR:
+		la t0, CAUGHT_KEY
+		lb t1, 0(t0)
+		bne zero, t1, 	CONTINUE_CHECK_IF_ARRIVED_DOOR
+		ret
 		
+		CONTINUE_CHECK_IF_ARRIVED_DOOR:
+		
+		la t0, POSICAO_PERSONAGEM
+		la t1, POSICAO_PORTAL
+		
+		lh t2, 0(t0)
+		lh t3, 0(t1)
+		addi t2, t2, -1
+		slt t5, t2, t3
+		addi t2, t2, 17
+		slt t6, t3, t2
+		and t5, t5, t6
+		addi t2, t2, -17
+		slt t6, t2, t3
+		addi t3, t3, 16
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t6, t4
+		or t5, t5, t4
+		mv a1, t5
+		
+		lh t2, 2(t0)
+		lh t3, 2(t1)
+		addi t2, t2, -1
+		slt t5, t2, t3
+		addi t2, t2, 17
+		slt t6, t3, t2
+		and t5, t5, t6
+		addi t2, t2, -17
+		slt t6, t2, t3
+		addi t3, t3, 8
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t6, t4
+		or t5, t5, t4
+		
+		mv a0, t5
+		
+		and a0, a0, a1
+		
+		
+		beq zero, a0, END_CHECK_ARRIVED_DOOR
+		
+								
+		j NEXT_FASE
+	END_CHECK_ARRIVED_DOOR: ret
+	
 ATIRA_T1A1:
 		la t1, POSICAO_TIRO1_A1
 		lh a1, 0(t1)
@@ -1216,12 +1437,13 @@ ATIRA_T1A1:
 		sh a2, 2(t0)
 		li t3, 1
 		sh t3, 4(t0)
-		#la t0, ATIRADOR_1_VIVO
-		#lb t1, 0(t0)
-		#bne zero, t1, 	CONTINUE_CHECK_TIRO_1
+		
 		j ATIROU_T1A1
 		
 		CONTINUE_CHECK_TIRO_1A1:
+		la t0, ATIRADOR_1_VIVO
+		lb t1, 0(t0)
+		ble t1, zero, END_CHECK_ATIRA_T1A1
 		la t0, POSICAO_PERSONAGEM
 		la t1, POSICAO_ATIRADOR_1
 		lh t2, 0(t0)
@@ -1315,6 +1537,9 @@ ATIRA_T2A1:
 		j ATIROU_T2A1
 		
 		CONTINUE_CHECK_TIRO_2A1:
+		la t0, ATIRADOR_1_VIVO
+		lb t1, 0(t0)
+		ble t1, zero, END_CHECK_ATIRA_T2A1
 		la t0, POSICAO_PERSONAGEM
 		la t1, POSICAO_ATIRADOR_1
 		lh t2, 0(t0)
@@ -1399,6 +1624,9 @@ ATIRA_T1A2:
 		j ATIROU_T1A2
 		
 		CONTINUE_CHECK_TIRO_1A2:
+		la t0, ATIRADOR_2_VIVO
+		lb t1, 0(t0)
+		ble t1, zero, END_CHECK_ATIRA_T1A2
 		la t0, POSICAO_PERSONAGEM
 		la t1, POSICAO_ATIRADOR_2
 		lh t2, 2(t0)
@@ -1494,6 +1722,9 @@ ATIRA_T2A2:
 		j ATIROU_T2A2
 		
 		CONTINUE_CHECK_TIRO_2A2:
+		la t0, ATIRADOR_2_VIVO
+		lb t1, 0(t0)
+		ble t1, zero, END_CHECK_ATIRA_T2A2
 		la t0, POSICAO_PERSONAGEM
 		la t1, POSICAO_ATIRADOR_2
 		lh t2, 2(t0)
@@ -1577,7 +1808,9 @@ ATIRA_T1A3:
 		j ATIROU_T1A3
 		
 		CONTINUE_CHECK_TIRO_1A3:
-		
+		la t0, ATIRADOR_3_VIVO
+		lb t1, 0(t0)
+		ble t1, zero, END_CHECK_ATIRA_T1A3
 		la t0, POSICAO_PERSONAGEM
 		la t1, POSICAO_ATIRADOR_3
 		lh t2, 2(t0)
@@ -1672,6 +1905,9 @@ ATIRA_T2A3:
 		j ATIROU_T2A3
 		
 		CONTINUE_CHECK_TIRO_2A3:
+		la t0, ATIRADOR_3_VIVO
+		lb t1, 0(t0)
+		ble t1, zero, END_CHECK_ATIRA_T2A3
 		la t0, POSICAO_PERSONAGEM
 		la t1, POSICAO_ATIRADOR_3
 		lh t2, 2(t0)
@@ -1786,5 +2022,12 @@ PRINT.Line:
 	addi t2, t2, 1
 	
 	blt t2, t5, PRINT.Line
-	ret	
+	ret
+
+LOST_GAME:
+li a7, 10
+ecall		
+NEXT_FASE:
+li a7, 10
+ecall	
 .include "../SYSTEMv21.s"	
