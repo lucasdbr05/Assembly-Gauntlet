@@ -25,7 +25,7 @@ PONTOS: .word 1000000
 
 
 
-#####FANTASMA 1######
+##### ATIRADOR 1######
 POSICAO_ATIRADOR_1: .half 88,12
 POSICAO_TIRO1_A1: .half 92,36,1
 ANTIGA_POSICAO_TIRO1_A1: .half 108,36
@@ -35,7 +35,7 @@ VIDAS_A1:.string "ATIRADOR 1:"
 ATIRADOR_1_VIVO: .byte 5
 ##########
 
-#####FANTASMA 2######
+##### ATIRADOR 2######
 POSICAO_ATIRADOR_2: .half 8,64   ##120, 164
 POSICAO_TIRO1_A2: .half 32,64,1
 ANTIGA_POSICAO_TIRO1_A2: .half 108,36
@@ -45,7 +45,7 @@ VIDAS_A2:.string "ATIRADOR 2:"
 ATIRADOR_2_VIVO: .byte 5
 ##########
 
-#####FANTASMA 3######
+#####ATIRADOR 3######
 POSICAO_ATIRADOR_3: .half 92,164
 POSICAO_TIRO1_A3: .half 88,172,1
 ANTIGA_POSICAO_TIRO1_A3: .half 108,36
