@@ -3,8 +3,8 @@ FASE_1: .string "FASE 1"
 
 
 
-POSICAO_PERSONAGEM: .half 160,80
-ANTIGA_POSICAO_PERSONAGEM: .half 160,84
+POSICAO_PERSONAGEM_F1: .half 160,80
+ANTIGA_POSICAO_PERSONAGEM_F1: .half 160,84
 
 sprite: .word 0x0000000
 
@@ -12,10 +12,10 @@ KEY_POSITION: .half 20, 20
 CAUGHT_KEY: .byte 0
 FST_TIME_CAUGHT:.byte 0
 
-POSICAO_TIRO: .half 0,0
-ANTIGA_POSICAO_TIRO:.half 0,0
-DIR_PERSONAGEM : .byte 'd'
-TIMER: .word 0x0006F4
+POSICAO_TIRO_F1: .half 0,0
+ANTIGA_POSICAO_TIRO_F1:.half 0,0
+DIR_PERSONAGEM_F1 : .byte 'd'
+TIMER_F1: .word 0x0006F4
 
 POSICAO_PORTAL: .half 40,80
 
@@ -58,14 +58,11 @@ AUX_T_FANTASMA_3: .word 0
 ##########
 CURRENT_CHECKED_GHOST:.byte 0
 
-TEST: .word 0x0000FFFF
+
 
 
 
 .include "sons.asm"
-#.include "matrix_test.data"
-
-
 .include "tiro.data"
 .include "black_block.s"
 .include "erase_tiro.data"
@@ -89,6 +86,7 @@ TEST: .word 0x0000FFFF
 	
 
 .text
+__FASE_1__:
 	li t1,0xFF000000	# endereco inicial da Memoria VGA - Frame 0
 	li t2,0xFF012C00	# endereco final 
 	li t3,0x07070707	# cor vermelho|vermelho|vermelhor|vermelho
@@ -234,7 +232,7 @@ TEST: .word 0x0000FFFF
 GAME_LOOP:
 	
 ######## TEMPORIZADOR #######
-	la t1, TIMER
+	la t1, TIMER_F1
 	lw t0, 0(t1)
 	addi t0, t0, -1
 	sw t0, 0(t1)
@@ -250,7 +248,7 @@ GAME_LOOP:
 	call INPUT #PROCEDIMENTO QUE CHECA SE HÁ ALGUM BOTÃO QUE FOI APERTADO
 	 #s0: frame a ser escolhido
 	####### DIRECAO DA SPRITE DO PERSONAGEM ######	
-	la t1, DIR_PERSONAGEM
+	la t1, DIR_PERSONAGEM_F1
 	lb t2, 0(t1)
 	li t0, 'w'
 	beq t2, t0, DIR_S_UP #move para cima
@@ -433,7 +431,7 @@ GAME_LOOP:
 	 
 	xori s0, s0, 1  #modifica os frames ente 0 e 1
 	
-	la t0, POSICAO_PERSONAGEM  
+	la t0, POSICAO_PERSONAGEM_F1
 	la t2, sprite
 	lw a0, 0(t2)  #imagem a ser carregada
 	lh a1, 0(t0)   #posição x do personagem
@@ -448,7 +446,7 @@ GAME_LOOP:
 	
 	#Apaga o rastro da posição antiga do personagem no bitmap display no frame seguinte ao do movimento
 	#Esse apagamento se dá sobrepondo a coloração de fundo sobre o rastro do personagem antes do movimento
-	la t0, ANTIGA_POSICAO_PERSONAGEM
+	la t0, ANTIGA_POSICAO_PERSONAGEM_F1
 	la a0, black_block
 	lh a1, 0(t0)
 	lh a2, 2(t0)
@@ -545,17 +543,17 @@ CONTINUE: ret
 
 
 MOVE_LEFT:
-	la t6, DIR_PERSONAGEM
+	la t6, DIR_PERSONAGEM_F1
 	li t0, 'a'
 	sb t0, 0(t6)
 	
 	
-	la t0, POSICAO_PERSONAGEM  #
-	la t1, ANTIGA_POSICAO_PERSONAGEM
+	la t0, POSICAO_PERSONAGEM_F1  #
+	la t1, ANTIGA_POSICAO_PERSONAGEM_F1
 	lw t2, 0(t0)
 	sw t2, 0(t1) #Atualiza a antiga posição do perosnagem
 	
-	la t0, POSICAO_PERSONAGEM
+	la t0, POSICAO_PERSONAGEM_F1
 	lh t1, 0(t0)  
 	addi t1, t1, -16
 	blt t1, zero, CONTINUE
@@ -592,7 +590,7 @@ MOVE_LEFT:
 	la t0, CAUGHT_KEY
 	lb t1, 0(t0)
 	bne zero, t1, end_check_key_ml
-	la t0, POSICAO_PERSONAGEM
+	la t0, POSICAO_PERSONAGEM_F1
 	la t1, KEY_POSITION
 	
 	lh t2, 0(t0)
@@ -639,15 +637,15 @@ MOVE_LEFT:
 	
 	ret
 MOVE_RIGHT:
-	la t6, DIR_PERSONAGEM
+	la t6, DIR_PERSONAGEM_F1
 	li t0, 'd'
 	sb t0, 0(t6)
-	la t0, POSICAO_PERSONAGEM
-	la t1, ANTIGA_POSICAO_PERSONAGEM
+	la t0, POSICAO_PERSONAGEM_F1
+	la t1, ANTIGA_POSICAO_PERSONAGEM_F1
 	lw t2, 0(t0)
 	sw t2, 0(t1)#Atualiza a antiga posição do perosnagem
 	
-	la t0, POSICAO_PERSONAGEM
+	la t0, POSICAO_PERSONAGEM_F1
 	lh t1, 0(t0)
 	li t2, 320
 	addi t1, t1, 16
@@ -686,7 +684,7 @@ MOVE_RIGHT:
 	la t0, CAUGHT_KEY
 	lb t1, 0(t0)
 	bne zero, t1, end_check_key_mr
-	la t0, POSICAO_PERSONAGEM
+	la t0, POSICAO_PERSONAGEM_F1
 	la t1, KEY_POSITION
 	
 	lh t2, 0(t0)
@@ -732,16 +730,16 @@ MOVE_RIGHT:
 	end_check_key_mr:
 	ret
 MOVE_UP:
-	la t6, DIR_PERSONAGEM
+	la t6, DIR_PERSONAGEM_F1
 	li t0, 'w'
 	sb t0, 0(t6)
 
-	la t0, POSICAO_PERSONAGEM
-	la t1, ANTIGA_POSICAO_PERSONAGEM
+	la t0, POSICAO_PERSONAGEM_F1
+	la t1, ANTIGA_POSICAO_PERSONAGEM_F1
 	lw t2, 0(t0)
 	sw t2, 0(t1)#Atualiza a antiga posição do perosnagem
 	
-	la t0, POSICAO_PERSONAGEM
+	la t0, POSICAO_PERSONAGEM_F1
 	lh t1, 2(t0)
 	addi t1, t1, -16
 	blt t1, zero, CONTINUE
@@ -776,7 +774,7 @@ MOVE_UP:
 	la t0, CAUGHT_KEY
 	lb t1, 0(t0)
 	bne zero, t1, end_check_key_mu
-	la t0, POSICAO_PERSONAGEM
+	la t0, POSICAO_PERSONAGEM_F1
 	la t1, KEY_POSITION
 	
 	lh t2, 0(t0)
@@ -823,15 +821,15 @@ MOVE_UP:
 	
 	ret
 MOVE_DOWN:
-	la t6, DIR_PERSONAGEM
+	la t6, DIR_PERSONAGEM_F1
 	li t0, 's'
 	sb t0, 0(t6)
-	la t0, POSICAO_PERSONAGEM
-	la t1, ANTIGA_POSICAO_PERSONAGEM
+	la t0, POSICAO_PERSONAGEM_F1
+	la t1, ANTIGA_POSICAO_PERSONAGEM_F1
 	lw t2, 0(t0)
 	sw t2, 0(t1)#Atualiza a antiga posição do perosnagem
 	
-	la t0, POSICAO_PERSONAGEM
+	la t0, POSICAO_PERSONAGEM_F1
 	lh t1, 2(t0)
 	li t2, 240
 	addi t1, t1, 16
@@ -869,7 +867,7 @@ MOVE_DOWN:
 	la t0, CAUGHT_KEY
 	lb t1, 0(t0)
 	bne zero, t1, end_check_key_md
-	la t0, POSICAO_PERSONAGEM
+	la t0, POSICAO_PERSONAGEM_F1
 	la t1, KEY_POSITION
 	
 	lh t2, 0(t0)
@@ -924,13 +922,13 @@ AUX_GAME_LOOP: j GAME_LOOP
 TIRO:
 
 	#Atualiza posicao inicial do tiro
-	la t0, POSICAO_PERSONAGEM
+	la t0, POSICAO_PERSONAGEM_F1
 	lh t1, 0(t0)
 	lh t2, 2(t0)
-	la t0, POSICAO_TIRO
+	la t0, POSICAO_TIRO_F1
 	sh t1, 0(t0)
 	sh t2, 2(t0)
-	la t0, DIR_PERSONAGEM
+	la t0, DIR_PERSONAGEM_F1
 	lb t5, 0(t0)
 	li t1, 'w'
 	beq t5, t1, TIRO_UP
@@ -948,7 +946,7 @@ TIRO:
 		################################
 		TIRO_UP:
 		#ebreak
-		la a0,POSICAO_TIRO
+		la a0,POSICAO_TIRO_F1
 		lh a2, 2(a0)
 		addi a2, a2, -4
 		sh a2, 2(a0)
@@ -956,7 +954,7 @@ TIRO:
 		addi a1, a1, 8
 		sh a1, 0(a0)
 		LOOP_PRINT_TIRO_UP:
-			la t0, POSICAO_TIRO
+			la t0, POSICAO_TIRO_F1
 			lh t4, 0(t0)
 			lh t5, 2(t0)
 			li t3, 320
@@ -980,7 +978,7 @@ TIRO:
 				addi t6, t6, 304
 				bgt t3, zero, loop_check_tiro_up
 			end_loop_check_tiro_up:
-		la a0,POSICAO_TIRO
+		la a0,POSICAO_TIRO_F1
 		lh a2, 2(a0)
 		addi a2, a2, -4
 		sh a2, 2(a0)
@@ -994,7 +992,7 @@ TIRO:
 		li a7,132
 		ecall
 		
-		la t0, ANTIGA_POSICAO_TIRO
+		la t0, ANTIGA_POSICAO_TIRO_F1
 		sh a1,0(t0)
 		sh a2, 2(t0)
 		
@@ -1016,7 +1014,7 @@ TIRO:
 		################################	
 		TIRO_DOWN:
 		#ebreak
-		la a0,POSICAO_TIRO
+		la a0,POSICAO_TIRO_F1
 		lh a2, 2(a0)
 		addi a2, a2, 20
 		sh a2, 2(a0)
@@ -1024,7 +1022,7 @@ TIRO:
 		addi a1, a1, 8
 		sh a1, 0(a0)
 		LOOP_PRINT_TIRO_DOWN:
-			la t0, POSICAO_TIRO
+			la t0, POSICAO_TIRO_F1
 			lh t4, 0(t0)
 			lh t5, 2(t0)
 			li t3, 320
@@ -1048,7 +1046,7 @@ TIRO:
 				bgt t3, zero, loop_check_tiro_down
 		
 			end_loop_check_tiro_down:
-		la a0,POSICAO_TIRO
+		la a0,POSICAO_TIRO_F1
 		lh a2, 2(a0)
 		addi a2, a2, 4
 		sh a2, 2(a0)
@@ -1062,7 +1060,7 @@ TIRO:
 		li a7,132
 		ecall
 		
-		la t0, ANTIGA_POSICAO_TIRO
+		la t0, ANTIGA_POSICAO_TIRO_F1
 		sh a1,0(t0)
 		sh a2, 2(t0)
 		
@@ -1083,7 +1081,7 @@ TIRO:
 		################################
 		TIRO_RIGHT:
 		#ebreak
-		la a0,POSICAO_TIRO
+		la a0,POSICAO_TIRO_F1
 		lh a1, 0(a0)
 		lh a2, 2(a0)
 		addi a1, a1, 20
@@ -1091,7 +1089,7 @@ TIRO:
 		addi a2, a2, 8
 		sh a2, 2(a0)
 		LOOP_PRINT_TIRO_RIGHT:
-			la t0, POSICAO_TIRO
+			la t0, POSICAO_TIRO_F1
 			lh t4, 0(t0)
 			lh t5, 2(t0)
 			li t3, 320
@@ -1118,7 +1116,7 @@ TIRO:
 				end_loop_check_tiro_right:		
 		
 		
-		la a0,POSICAO_TIRO
+		la a0,POSICAO_TIRO_F1
 		lh a1, 0(a0)
 		addi a1, a1, 4
 		sh a1, 0(a0)
@@ -1132,7 +1130,7 @@ TIRO:
 		li a7,132
 		ecall
 		
-		la t0, ANTIGA_POSICAO_TIRO
+		la t0, ANTIGA_POSICAO_TIRO_F1
 		sh a1,0(t0)
 		sh a2, 2(t0)
 		
@@ -1154,7 +1152,7 @@ TIRO:
 		TIRO_LEFT:
 		#ebreak
 	
-		la a0,POSICAO_TIRO
+		la a0,POSICAO_TIRO_F1
 		lh a1, 0(a0)
 		addi a1, a1, -4
 		sh a1, 0(a0)
@@ -1162,7 +1160,7 @@ TIRO:
 		addi a2, a2, 8
 		sh a2, 2(a0)
 		LOOP_PRINT_TIRO_LEFT:
-			la t0, POSICAO_TIRO
+			la t0, POSICAO_TIRO_F1
 			lh t4, 0(t0)
 			lh t5, 2(t0)
 			li t3, 320
@@ -1186,7 +1184,7 @@ TIRO:
 				bgt t3, zero, loop_check_tiro_left
 			end_loop_check_tiro_left:
 			
-		la a0,POSICAO_TIRO
+		la a0,POSICAO_TIRO_F1
 		lh a1, 0(a0)
 		addi a1, a1, -4
 		sh a1, 0(a0)
@@ -1200,7 +1198,7 @@ TIRO:
 		li a7,132
 		ecall
 		
-		la t0, ANTIGA_POSICAO_TIRO
+		la t0, ANTIGA_POSICAO_TIRO_F1
 		sh a1,0(t0)
 		sh a2, 2(t0)
 		
@@ -1230,7 +1228,7 @@ TIRO:
 	
 		CONTINUE_CHECK_IF_KILLED_GHOST_1:
 		la t0, POSICAO_FANTASMA_1
-		la t1, POSICAO_TIRO
+		la t1, POSICAO_TIRO_F1
 		
 		lh t2, 0(t0)
 		lh t3, 0(t1)
@@ -1278,10 +1276,10 @@ TIRO:
 		call PRINT
 		la t0, FANTASMA_1_VIVO
 		sb zero, 0(t0)	
-		li a0, 60
+		li a0, 73
 		li a1, 350
 		li a2, 112
-		li a3, 100
+		li a3, 115
 		li a7, 33
 		ecall					
 		j GAME_LOOP
@@ -1295,7 +1293,7 @@ TIRO:
 	
 		CONTINUE_CHECK_IF_KILLED_GHOST_2:
 		la t0, POSICAO_FANTASMA_2
-		la t1, POSICAO_TIRO
+		la t1, POSICAO_TIRO_F1
 		
 		lh t2, 0(t0)
 		lh t3, 0(t1)
@@ -1361,7 +1359,7 @@ TIRO:
 	
 		CONTINUE_CHECK_IF_KILLED_GHOST_3:
 		la t0, POSICAO_FANTASMA_3
-		la t1, POSICAO_TIRO
+		la t1, POSICAO_TIRO_F1
 		
 		lh t2, 0(t0)
 		lh t3, 0(t1)
@@ -1451,7 +1449,7 @@ TIRO:
 		
 		CONTINUE_CHECK_IF_HIT_GHOST:
 		
-		la t0, POSICAO_PERSONAGEM
+		la t0, POSICAO_PERSONAGEM_F1
 		
 		mv t1, a3
 		
@@ -1537,7 +1535,7 @@ TIRO:
 		CONTINUE_CHECK_IF_DESTROYED_GATE:
 		
 		la t0, POSICAO_GHOST_GATE
-		la t1, POSICAO_TIRO
+		la t1, POSICAO_TIRO_F1
 		
 		lh t2, 0(t0)
 		lh t3, 0(t1)
@@ -1614,7 +1612,7 @@ TIRO:
 		
 		CONTINUE_CHECK_IF_ARRIVED_DOOR:
 		
-		la t0, POSICAO_PERSONAGEM
+		la t0, POSICAO_PERSONAGEM_F1
 		la t1, POSICAO_PORTAL
 		
 		lh t2, 0(t0)
@@ -2192,14 +2190,17 @@ LOST_GAME:
 	li a3, 120
 	li a7, 33
 	ecall
+	
+	li a0,2000 
+	li a7,132
 	ecall
+	
+	j __FASE_1__
 	
 			
 NEXT_FASE:
 	
 	li a7, 10
 	ecall
-	#.include "__fase_2.asm"
-	#call __FASE_2__
-
+	
 .include "../SYSTEMv21.s"	
