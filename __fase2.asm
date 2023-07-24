@@ -424,6 +424,7 @@ GAME_LOOP:
 	call PRINT
 	j GAME_LOOP
 	Check_Has_KEY:
+	######
 	la t0, POSICAO_ATIRADOR_2
 	la a0, black_block
 	lh a1, 0(t0)
@@ -432,6 +433,15 @@ GAME_LOOP:
 	call PRINT
 	li a3, 1
 	call PRINT
+	la t0, POSICAO_ATIRADOR_3
+	la a0, black_block
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	li a3, 0
+	call PRINT
+	li a3, 1
+	call PRINT
+	#######
 	la t0, CAUGHT_KEY_AUX
 	lb t1, 0(t0)
 	bne zero, t1, Has_Key
@@ -457,9 +467,17 @@ GAME_LOOP:
 	li t1, 204
 	sh t1, 2(t0)
 	
+	la t0, POSICAO_ATIRADOR_3
+	li t1, 96
+	sh t1, 2(t0)
 	la t0, POSICAO_TIRO1_A2
 	la t2, POSICAO_TIRO2_A2
 	li t1, 204
+	sh t1, 2(t0)
+	sh t1, 2(t2)
+	la t0, POSICAO_TIRO1_A3
+	la t2, POSICAO_TIRO2_A3
+	li t1, 102
 	sh t1, 2(t0)
 	sh t1, 2(t2)
 	
@@ -476,7 +494,14 @@ GAME_LOOP:
 	call PRINT
 	li a3, 1
 	call PRINT
-	
+	la t0, POSICAO_ATIRADOR_3
+	la a0, inimigo_esquerda
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	li a3, 0
+	call PRINT
+	li a3, 1
+	call PRINT
 	j GAME_LOOP
 	Has_Key:
 	la t0, KEY_POSITION
@@ -1871,9 +1896,21 @@ ATIRA_T1A3:
 		la t0, POSICAO_TIRO1_A3
 		lb t1, 4(t0)
 		bne zero, t1, CONTINUE_CHECK_TIRO_1A3
-	
+		UP_T1_A3:
+		la t0, POSICAO_TIRO1_A3
+		la t4, CAUGHT_KEY_AUX
+		lb t5, 0(t4)
+		bne zero, t5, T1A3_UPD
 		li a1, 88
 		li a2, 172
+		sh a1, 0(t0)
+		sh a2, 2(t0)
+		li t3, 1    
+		sh t3, 4(t0)
+		j ATIROU_T1A3
+		T1A3_UPD:
+		li a1, 88
+		li a2, 102
 		sh a1, 0(t0)
 		sh a2, 2(t0)
 		li t3, 1    
@@ -1882,6 +1919,7 @@ ATIRA_T1A3:
 		#lb t1, 0(t0)
 		#bne zero, t1, 	CONTINUE_CHECK_TIRO_1
 		j ATIROU_T1A3
+		
 		
 		CONTINUE_CHECK_TIRO_1A3:
 		la t0, ATIRADOR_3_VIVO
@@ -1922,11 +1960,7 @@ ATIRA_T1A3:
 		DONT_UPDATE_T2A3:
 		li t2, 46
 		bgt a1, t2 , T1A3_IS_VALID
-		li a1,88
-		li a2, 172
-		sh a1, 0(t0)
-		sh a2, 2(t0)	
-		j ATIROU_T1A3
+		j UP_T1_A3
 		T1A3_IS_VALID:
 		sh a1, 0(t1)
 		sh a2, 2(t1)
@@ -1963,12 +1997,26 @@ ATIRA_T2A3:
 		la t0, POSICAO_TIRO2_A3
 		lb t1, 4(t0)
 		bne zero, t1, CONTINUE_CHECK_TIRO_2A3
-		li a1,88
-		li a2, 172
+		UP_T2_A3:
 		la t0, POSICAO_TIRO2_A3
+		la t4, CAUGHT_KEY_AUX
+		lb t5, 0(t4)
+		bne zero, t5, T2A3_UPD
+		li a1, 88
+		li a2, 172
+		sh a1, 0(t0)
+		sh a2, 2(t0)
+		j ATIROU_T2A3
+		T2A3_UPD:
+		li a1, 88
+		li a2, 102
 		sh a1, 0(t0)
 		sh a2, 2(t0)
 		
+		#la t0, ATIRADOR_1_VIVO
+		#lb t1, 0(t0)
+		#bne zero, t1, 	CONTINUE_CHECK_TIRO_1
+		j ATIROU_T2A3
 		#li a1,88
 		#li a2, 36
 		#sh a1, 0(t0)
@@ -1978,7 +2026,7 @@ ATIRA_T2A3:
 		#la t0, ATIRADOR_1_VIVO
 		#lb t1, 0(t0)
 		#bne zero, t1, 	CONTINUE_CHECK_TIRO_1
-		j ATIROU_T2A3
+		
 		
 		CONTINUE_CHECK_TIRO_2A3:
 		la t0, ATIRADOR_3_VIVO
@@ -2013,11 +2061,7 @@ ATIRA_T2A3:
 		lh a2, 2(t0)
 		li t2, 46
 		bgt a1, t2 , T2A3_IS_VALID
-		li a1,88
-		li a2, 172
-		sh a1, 0(t0)
-		sh a2, 2(t0)	
-		j ATIROU_T2A3
+		j UP_T2_A3
 		T2A3_IS_VALID:
 		sh a1, 0(t1)
 		sh a2, 2(t1)
