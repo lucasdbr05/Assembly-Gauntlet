@@ -4,17 +4,20 @@ FASE_1: .string "FASE 1"
 
 
 POSICAO_PERSONAGEM: .half 160,80
-ANTIGA_POSICAO_PERSONAGEM: .half 160,80
+ANTIGA_POSICAO_PERSONAGEM: .half 160,84
+
+sprite: .word 0x0000000
 
 KEY_POSITION: .half 20, 20
 CAUGHT_KEY: .byte 0
+FST_TIME_CAUGHT:.byte 0
 
 POSICAO_TIRO: .half 0,0
 ANTIGA_POSICAO_TIRO:.half 0,0
-DIR_PERSONAGEM : .byte ' '
+DIR_PERSONAGEM : .byte 'd'
+TIMER: .word 0x0006F4
 
-
-POSICAO_PORTAL: .half 40,112
+POSICAO_PORTAL: .half 40,80
 
 LIFE_MSG: .string "LIFE: "
 LIFE: .byte 5
@@ -58,11 +61,11 @@ CURRENT_CHECKED_GHOST:.byte 0
 TEST: .word 0x0000FFFF
 
 
-.include "key.data"
-.include "portal.data"
+
+.include "sons.asm"
 #.include "matrix_test.data"
-.include "lower_block.data"
-.include "block.s"
+
+
 .include "tiro.data"
 .include "black_block.s"
 .include "erase_tiro.data"
@@ -71,6 +74,18 @@ TEST: .word 0x0000FFFF
 .include "matrix1.data"
 .include "ghost_gate.data"
 .include "../MACROSv21.s"
+.include "sprites/chave.data"
+.include "sprites/fantasma.data"
+.include "sprites/personagem_direita.data"
+.include "sprites/personagem_esquerda.data"
+.include "sprites/personagem_frente.data"
+.include "sprites/personagem_costas.data"
+.include "sprites/porta.data"
+.include "sprites/sf.data"
+.include "sprites/inimigo_baixo.data"
+.include "sprites/inimigo_cima.data"
+.include "sprites/inimigo_direita.data"
+.include "sprites/inimigo_esquerda.data"
 	
 
 .text
@@ -91,7 +106,12 @@ TEST: .word 0x0000FFFF
 	li a3, 1
 	call PRINT  #FUNDO NO FRAME 1
 	
-	
+	li a0, 75
+	li a1, 4500
+	li a2, 96
+	li a3, 120
+	li a7, 33
+	ecall
 	
 	
 	li a7,104
@@ -213,9 +233,60 @@ TEST: .word 0x0000FFFF
 
 GAME_LOOP:
 	
+######## TEMPORIZADOR #######
+	la t1, TIMER
+	lw t0, 0(t1)
+	addi t0, t0, -1
+	sw t0, 0(t1)
+	bgt t0, zero, JUMP_TIMER
+	li t2, 0x06F4
+	sw t2, 0(t1)
+	la t0, LIFE
+	lb t1, 0(t0)
+	addi t1, t1, -1
+	sb t1, 0(t0)
+	JUMP_TIMER:
+###########
 	call INPUT #PROCEDIMENTO QUE CHECA SE HÁ ALGUM BOTÃO QUE FOI APERTADO
 	 #s0: frame a ser escolhido
+	####### DIRECAO DA SPRITE DO PERSONAGEM ######	
+	la t1, DIR_PERSONAGEM
+	lb t2, 0(t1)
+	li t0, 'w'
+	beq t2, t0, DIR_S_UP #move para cima
+	li t0, 'a'
+	beq t2, t0, DIR_S_LEFT  #move para esquerda
+	li t0, 's'
+	beq t2, t0,  DIR_S_DOWN   #move para  baixo
+	li t0, 'd'
+	beq t2, t0,  DIR_S_RIGHT   #move para	 direit
 	
+	
+	DIR_S_UP:
+	la t1, sprite
+	la t2, personagem_up
+	sw t2, 0(t1)
+	j END_DIRS
+	DIR_S_DOWN:
+	la t1, sprite
+	la t2, personagem_down
+	sw t2, 0(t1)
+	j END_DIRS
+	DIR_S_LEFT:
+	la t1, sprite
+	la t2, personagem_left
+	sw t2, 0(t1)
+	j END_DIRS
+	DIR_S_RIGHT:
+	la t1, sprite
+	la t2, personagem_right
+	sw t2, 0(t1)
+	j END_DIRS
+	
+	END_DIRS:
+	#########
+	
+
 	la t1,LIFE
 	lb t0, 0(t1)
 	li a7,101
@@ -363,11 +434,12 @@ GAME_LOOP:
 	xori s0, s0, 1  #modifica os frames ente 0 e 1
 	
 	la t0, POSICAO_PERSONAGEM  
-	la a0, sprite16x16  #imagem a ser carregada
+	la t2, sprite
+	lw a0, 0(t2)  #imagem a ser carregada
 	lh a1, 0(t0)   #posição x do personagem
 	lh a2, 2(t0)    #posição y do personagem
 	mv a3, s0        #frame
-	call PRINT      #printa o personagem no bitmap
+	call PRINT
 	
 	#Seleciona o frame do bitmap display a ser usado
 	li t0, 0xFF200604
@@ -428,8 +500,20 @@ GAME_LOOP:
 	call PRINT
 	
 	call CHECK_IF_ARRIVED_DOOR
-
-	
+	##########
+	la t1,FST_TIME_CAUGHT
+	lb t0, 0(t1)
+	bne zero, t0, DONT_PLAY_MKEY
+	li t2, 1
+	sb t2, 0(t1)
+	li a0, 61
+	li a1, 1300
+	li a2, 88
+	li a3, 110
+	li a7, 33
+	ecall
+	DONT_PLAY_MKEY:
+	#########
 	j GAME_LOOP
 	
 	
@@ -838,6 +922,7 @@ MOVE_DOWN:
 AUX_GAME_LOOP: j GAME_LOOP
 ####APERTA K
 TIRO:
+
 	#Atualiza posicao inicial do tiro
 	la t0, POSICAO_PERSONAGEM
 	lh t1, 0(t0)
@@ -1068,6 +1153,7 @@ TIRO:
 		################################
 		TIRO_LEFT:
 		#ebreak
+	
 		la a0,POSICAO_TIRO
 		lh a1, 0(a0)
 		addi a1, a1, -4
@@ -1191,7 +1277,13 @@ TIRO:
 		
 		call PRINT
 		la t0, FANTASMA_1_VIVO
-		sb zero, 0(t0)						
+		sb zero, 0(t0)	
+		li a0, 60
+		li a1, 350
+		li a2, 112
+		li a3, 100
+		li a7, 33
+		ecall					
 		j GAME_LOOP
 	END_CHECK_GHOST_1: ret
 
@@ -1250,7 +1342,13 @@ TIRO:
 		
 		call PRINT
 		la t0, FANTASMA_2_VIVO
-		sb zero, 0(t0)						
+		sb zero, 0(t0)	
+		li a0, 60
+		li a1, 350
+		li a2, 112
+		li a3, 100
+		li a7, 33
+		ecall					
 		j AUX_GAME_LOOP
 	END_CHECK_GHOST_2: ret
 
@@ -1309,7 +1407,13 @@ TIRO:
 		
 		call PRINT
 		la t0, FANTASMA_3_VIVO
-		sb zero, 0(t0)						
+		sb zero, 0(t0)
+		li a0, 60
+		li a1, 350
+		li a2, 112
+		li a3, 100
+		li a7, 33
+		ecall						
 		j AUX_GAME_LOOP
 	END_CHECK_GHOST_3: ret			
 	
@@ -1401,8 +1505,17 @@ TIRO:
 		mv a3,s0
 		
 		call PRINT
+		
+		
 		mv  t0, a4
-		sb zero, 0(t0)						
+		sb zero, 0(t0)
+	
+		li a0, 22	#muda a nota
+		li a1, 450	#muda a duração (está em milissegundos)
+		li a2, 15	#muda o instrumento
+		li a3, 112	#muda o  volume
+		li a7, 33
+		ecall											
 		j AUX_GAME_LOOP
 	END_CHECK_HIT_GHOST: ret
 	
@@ -1467,9 +1580,15 @@ TIRO:
 		la t1, GHOST_GATE_LIFES
 		lb t0, 0(t1)
 		addi t0, t0, -1
-		
+		#########
 		sb t0, 0(t1)
-		
+		li a0, 8	
+		li a1, 350	
+		li a2, 96	
+		li a3, 127	
+		li a7, 33	
+		ecall
+		##########
 		
 		bne zero, t0, MOVEU_FANTASMA_1
 		sb zero, 0(t1)
@@ -1480,7 +1599,9 @@ TIRO:
 		li a3,0
 		call PRINT
 		li a3, 1
-		call PRINT				
+		call PRINT	
+		
+				
 		j MOVEU_FANTASMA_1
 	END_CHECK_IF_DESTROYED_GATE: ret
 
@@ -1533,7 +1654,12 @@ TIRO:
 		
 		
 		beq zero, a0, END_CHECK_ARRIVED_DOOR
-		
+		li a0, 96	
+		li a1, 4500	
+		li a2, 46	
+		li a3, 127	
+		li a7, 33	
+		ecall
 								
 		j NEXT_FASE
 	END_CHECK_ARRIVED_DOOR: ret
@@ -1557,7 +1683,7 @@ MOVER_FANTASMA_1:
 	la t0,COUNTER_FANTASMA_1
 	lw t1, 0(t0)
 	addi t1, t1, 1
-	li t2,  1000
+	li t2,  200
 	slt t3, t2, t1
 	sw t1, 0(t0)
 	la t0, FANTASMA_1_VIVO
@@ -1686,7 +1812,7 @@ MOVER_FANTASMA_2:
 	la t0,COUNTER_FANTASMA_2
 	lw t1, 0(t0)
 	addi t1, t1, 1
-	li t2,  1000
+	li t2,  200
 	slt t3, t2, t1
 	sw t1, 0(t0)
 	la t0, FANTASMA_2_VIVO
@@ -1818,7 +1944,7 @@ MOVER_FANTASMA_3:
 	la t0,COUNTER_FANTASMA_3
 	lw t1, 0(t0)
 	addi t1, t1, 1
-	li t2,  1000
+	li t2,  200
 	slt t3, t2, t1
 	sw t1, 0(t0)
 	la t0, FANTASMA_3_VIVO
@@ -2051,13 +2177,29 @@ PRINT.Line:
 	ret
 
 
-LOST_GAME:	
-	li a7, 10
+LOST_GAME:
+	la a0, sf
+	li a2, 60
+	li a1, 60
+	li a3, 0
+	call PRINT
+	li a3, 1
+	call PRINT
+	
+	li a0, 75
+	li a1, 4500
+	li a2, 96
+	li a3, 120
+	li a7, 33
 	ecall
-			
-NEXT_FASE:
-	li a7, 10
 	ecall
 	
+			
+NEXT_FASE:
+	
+	li a7, 10
+	ecall
+	#.include "__fase_2.asm"
+	#call __FASE_2__
 
 .include "../SYSTEMv21.s"	
