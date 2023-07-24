@@ -7,8 +7,9 @@ ANTIGA_POSICAO_PERSONAGEM: .half 160,80
 sprite: .word 0x00000000
 DIR_PERSONAGEM : .byte 'd'
 
-KEY_POSITION: .half 24, 200
+KEY_POSITION: .half 48, 200
 CAUGHT_KEY: .byte 0
+CAUGHT_KEY_AUX: .byte 0
 
 POSICAO_TIRO: .half 0,0
 ANTIGA_POSICAO_TIRO:.half 0,0
@@ -33,6 +34,7 @@ POSICAO_TIRO2_A1: .half 92,36,0
 ANTIGA_POSICAO_TIRO2_A1: .half 108,36
 VIDAS_A1:.string "ATIRADOR 1:"
 ATIRADOR_1_VIVO: .byte 5
+LIMIT_A1:.half 106
 ##########
 
 ##### ATIRADOR 2######
@@ -43,6 +45,7 @@ POSICAO_TIRO2_A2: .half 32,64,0
 ANTIGA_POSICAO_TIRO2_A2: .half 108,36
 VIDAS_A2:.string "ATIRADOR 2:"
 ATIRADOR_2_VIVO: .byte 5
+LIMIT_A2:.half 164
 ##########
 
 #####ATIRADOR 3######
@@ -53,6 +56,7 @@ POSICAO_TIRO2_A3: .half 88,172,0
 ANTIGA_POSICAO_TIRO2_A3: .half 108,36
 VIDAS_A3:.string "ATIRADOR 3:"
 ATIRADOR_3_VIVO: .byte 5
+LIMIT_A3:.word 88
 ##########
 
 CURRENT_CHECKED_TIRO:.byte 0
@@ -60,7 +64,7 @@ CURRENT_CHECKED_AT: .byte 0
 
 
 
-.include "key.data"
+
 
 .include "lower_block.data"
 .include "block.s"
@@ -72,15 +76,18 @@ CURRENT_CHECKED_AT: .byte 0
 .include "matrix2.data"
 .include "ghost_gate.data"
 .include "../MACROSv21.s"
+.include "sprites/chave.data"
 .include "sprites/personagem_direita.data"
 .include "sprites/personagem_esquerda.data"
 .include "sprites/personagem_frente.data"
 .include "sprites/personagem_costas.data"
 .include "sprites/porta.data"
+.include "sprites/sf.data"
 .include "sprites/inimigo_baixo.data"
 .include "sprites/inimigo_cima.data"
 .include "sprites/inimigo_direita.data"
 .include "sprites/inimigo_esquerda.data"
+
 
 
 .text
@@ -192,7 +199,7 @@ CURRENT_CHECKED_AT: .byte 0
 	
 	
 	la t0, POSICAO_ATIRADOR_1
-	la a0, block
+	la a0, inimigo_baixo
 	lh a1, 0(t0)
 	lh a2, 2(t0)
 	li a3, 0
@@ -201,7 +208,7 @@ CURRENT_CHECKED_AT: .byte 0
 	call PRINT
 	
 	la t0, POSICAO_ATIRADOR_2
-	la a0, block
+	la a0, inimigo_direita
 	lh a1, 0(t0)
 	lh a2, 2(t0)
 	li a3, 0
@@ -210,7 +217,7 @@ CURRENT_CHECKED_AT: .byte 0
 	call PRINT
 	
 	la t0, POSICAO_ATIRADOR_3
-	la a0, block
+	la a0, inimigo_esquerda
 	lh a1, 0(t0)
 	lh a2, 2(t0)
 	li a3, 0
@@ -403,11 +410,9 @@ GAME_LOOP:
 	ATIROU_T1A3:
 #################################
 	
-	
-	
 	la t1, CAUGHT_KEY
 	lb t0, 0(t1)
-	bne zero,t0, Has_KEY
+	bne zero,t0, Check_Has_KEY
 	la t0, KEY_POSITION
 	la a0, key
 	lh a1, 0(t0)
@@ -418,13 +423,67 @@ GAME_LOOP:
 	xori a3, a3,1
 	call PRINT
 	j GAME_LOOP
-	Has_KEY:
+	Check_Has_KEY:
+	la t0, POSICAO_ATIRADOR_2
+	la a0, black_block
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	li a3, 0
+	call PRINT
+	li a3, 1
+	call PRINT
+	la t0, CAUGHT_KEY_AUX
+	lb t1, 0(t0)
+	bne zero, t1, Has_Key
+	li t2, 1
+	sb t2, 0(t0)
 	la t0, KEY_POSITION
-	la a0, erase_tiro
+	la a0, black_block
 	lh a1, 0(t0)
 	lh a2, 2(t0)
 	mv a3, s0
+	xori a3, a3,1
+	call PRINT
+	li t1, 140
+	li t2, 64
+	la t0, KEY_POSITION
+	sh t1, 0(t0)
+	sh t2, 2(t0)
+	la t0, CAUGHT_KEY
+	sb zero, 0(t0)
 	
+	#####
+	la t0, POSICAO_ATIRADOR_2
+	li t1, 204
+	sh t1, 2(t0)
+	
+	la t0, POSICAO_TIRO1_A2
+	la t2, POSICAO_TIRO2_A2
+	li t1, 204
+	sh t1, 2(t0)
+	sh t1, 2(t2)
+	
+	#####
+	la t0, LIMIT_A1
+	li t1,180
+	sh t1, 0(t0)
+	
+	la t0, POSICAO_ATIRADOR_2
+	la a0, inimigo_direita
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	li a3, 0
+	call PRINT
+	li a3, 1
+	call PRINT
+	
+	j GAME_LOOP
+	Has_Key:
+	la t0, KEY_POSITION
+	la a0, black_block
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	mv a3, s0
 	
 	xori a3, a3,1
 	call PRINT
@@ -1428,9 +1487,10 @@ ATIRA_T1A1:
 		call PRINT
 		li a3,1 
 		call PRINT
-		la t0, POSICAO_TIRO1_A1
+		
 		lb t1, 4(t0)
 		bne zero, t1, CONTINUE_CHECK_TIRO_1A1
+		la t0, POSICAO_TIRO1_A1
 		li a1,92
 		li a2, 36
 		sh a1, 0(t0)
@@ -1592,7 +1652,7 @@ ATIRA_T2A1:
 		li t1, 2
 		sb t1, 0(t0)
 		
-		#call CHECK_IF_HIT_PERS
+		call CHECK_IF_HIT_PERS
 				
 		j ATIROU_T2A1
 	END_CHECK_ATIRA_T2A1:
@@ -1611,9 +1671,21 @@ ATIRA_T1A2:
 		la t0, POSICAO_TIRO1_A2
 		lb t1, 4(t0)
 		bne zero, t1, CONTINUE_CHECK_TIRO_1A2
-	
+		UP_T1_A2:#ebreak
+		la t0, POSICAO_TIRO1_A2
+		la t4, CAUGHT_KEY_AUX
+		lb t5, 0(t4)
+		bne zero, t5, T1A2_UPD
 		li a1, 32
 		li a2, 64
+		sh a1, 0(t0)
+		sh a2, 2(t0)
+		li t3, 1    
+		sh t3, 4(t0)
+		j ATIROU_T1A2
+		T1A2_UPD:
+		li a1, 32
+		li a2, 212
 		sh a1, 0(t0)
 		sh a2, 2(t0)
 		li t3, 1    
@@ -1656,18 +1728,13 @@ ATIRA_T1A2:
 		lh a2, 2(t0)
 		li t2, 84
 		blt a1,t2, DONT_UPDATE_T2A2
-	
 		la t3, POSICAO_TIRO2_A2
 		li t4, 1
 		sb t4, 4(t3)
 		DONT_UPDATE_T2A2:
 		li t2, 164
-		ble a1, t2 , T1A2_IS_VALID
-		li a1,32
-		li a2, 64
-		sh a1, 0(t0)
-		sh a2, 2(t0)	
-		j ATIROU_T1A2
+		ble a1, t2,  T1A2_IS_VALID
+		j UP_T1_A2
 		T1A2_IS_VALID:
 		sh a1, 0(t1)
 		sh a2, 2(t1)
@@ -1704,12 +1771,25 @@ ATIRA_T2A2:
 		la t0, POSICAO_TIRO2_A2
 		lb t1, 4(t0)
 		bne zero, t1, CONTINUE_CHECK_TIRO_2A2
-		li a1,32
-		li a2, 64
+		UP_T2_A2:#ebreak
 		la t0, POSICAO_TIRO2_A2
+		la t4, CAUGHT_KEY_AUX
+		lb t5, 0(t4)
+		bne zero, t5, T2A2_UPD
+		li a1, 32
+		li a2, 64
 		sh a1, 0(t0)
 		sh a2, 2(t0)
-		
+		j ATIROU_T2A2
+		T2A2_UPD:
+		li a1, 32
+		li a2, 212
+		sh a1, 0(t0)
+		sh a2, 2(t0)
+		#la t0, ATIRADOR_1_VIVO
+		#lb t1, 0(t0)
+		#bne zero, t1, 	CONTINUE_CHECK_TIRO_1
+		j ATIROU_T2A2
 		#li a1,92
 		#li a2, 36
 		#sh a1, 0(t0)
@@ -1754,11 +1834,7 @@ ATIRA_T2A2:
 		lh a2, 2(t0)
 		li t2, 164
 		ble a1, t2 , T2A2_IS_VALID
-		li a1,32
-		li a2, 64
-		sh a1, 0(t0)
-		sh a2, 2(t0)	
-		j ATIROU_T2A2
+		j UP_T2_A2
 		T2A2_IS_VALID:
 		sh a1, 0(t1)
 		sh a2, 2(t1)
