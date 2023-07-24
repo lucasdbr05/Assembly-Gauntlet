@@ -1458,7 +1458,7 @@ CHECK_IF_HIT_PERS:
 		lb t0, 0(t1)
 		addi t0, t0, -1
 		sb t0, 0(t1)
-		#beq t0, zero, LOST_GAME
+		beq t0, zero, LOST_GAME
 		mv t0, a5
 		la a0, erase_tiro
 		lh a1, 0(t0)
@@ -1469,7 +1469,8 @@ CHECK_IF_HIT_PERS:
 
 		mv  t0, a5
 		lb t1, 4(t0)
-		sb zero, 4(t0)						
+		sb zero, 4(t0)	
+							
 		j AUX_GAME_LOOP
 	END_CHECK_HIT_TIRO: ret			
 	CHECK_IF_ARRIVED_DOOR:
@@ -2168,8 +2169,18 @@ PRINT.Line:
 	ret
 
 LOST_GAME:
-
-li a7, 10
+la a0, sf
+li a2, 60
+li a1, 60
+li a3, 0
+call PRINT
+li a3, 1
+call PRINT
+li a0, 75
+li a1, 4500
+li a2, 96
+li a3, 120
+li a7, 33
 ecall		
 NEXT_FASE:
 li a7, 10
