@@ -23,7 +23,7 @@ LIFE_MSG: .string "LIFE: "
 LIFE: .byte 5
 
 
-TIMER: .word 0x0000BF4
+TIMER: .word 0x0006F4
 
 
 PONTOS_MSG: .string "SCORE: " 
@@ -99,6 +99,7 @@ CURRENT_CHECKED_F: .byte 0
 .include "sprites/inimigo_esquerda.data"
 
 .text
+__FASE_3__:
 	li t1,0xFF000000	# endereco inicial da Memoria VGA - Frame 0
 	li t2,0xFF012C00	# endereco final 
 	li t3,0x07070707	# cor vermelho|vermelho|vermelhor|vermelho
@@ -245,7 +246,7 @@ GAME_LOOP:
 	addi t0, t0, -1
 	sw t0, 0(t1)
 	bgt t0, zero, JUMP_TIMER
-	li t2, 0x0BF4
+	li t2, 0x06F4
 	sw t2, 0(t1)
 	la t0, LIFE
 	lb t1, 0(t0)
@@ -445,14 +446,14 @@ GAME_LOOP:
 	xori a3, a3,1
 	call PRINT
 	li t1, 52
-	li t2, 220
+	li t2, 180
 	la t0, KEY_POSITION
 	sh t1, 0(t0)
 	sh t2, 2(t0)
 	la t0, CAUGHT_KEY
 	sb zero, 0(t0)
 	la t0, LIMIT_DOWN
-	li t1,180
+	li t1,212
 	sh t1, 0(t0)
 	
 	j GAME_LOOP
@@ -1575,7 +1576,6 @@ TIRO_TO_LEFT:
 	
 #################################################################################
 	CHECK_IF_HIT_GHOST:
-		
 		la t0, CURRENT_CHECKED_F
 		lb t1, 0(t0)
 		beq t1, zero, IS_FN
@@ -1657,13 +1657,28 @@ TIRO_TO_LEFT:
 	END_CHECK_HIT_GHOST: ret
 #######################################################
 CHECK_IF_KILLED_GHOST:
-		la t0, FANTASMA_VIVO
+		la t0, CURRENT_CHECKED_F
+		lb t1, 0(t0)
+		beq t1, zero, KG_FN
+		li t0, 1
+		beq t1,t0,KG_FAUX
+		KG_FN:
+		la a4, POSICAO_FANTASMA
+		la a5, FANTASMA_VIVO
+		j CONTINUE_CHECK_IF_KILLED_GHOST
+		KG_FAUX:
+		la a4, POSICAO_FANTASMA_AUX
+		la a5, FANTASMA_AUX_VIVO
+		j CONTINUE_CHECK_IF_KILLED_GHOST	
+		
+	
+		mv t0, a5
 		lb t1, 0(t0)
 		bne zero, t1, 	CONTINUE_CHECK_IF_KILLED_GHOST
 		ret
 	
 		CONTINUE_CHECK_IF_KILLED_GHOST:
-		la t0, POSICAO_FANTASMA
+		mv t0, a4
 		la t1, POSICAO_TIRO
 		
 		lh t2, 0(t0)
@@ -1702,20 +1717,21 @@ CHECK_IF_KILLED_GHOST:
 		and a0, a0, a1
 		
 		#ebreak
-		beq zero, a0, END_CHECK_GHOST
-		la t0, POSICAO_FANTASMA
-		la a0, black_block
-		lh a1, 0(t0)
-		lh a2, 2(t0)
-		mv a3,s0
+		beq zero, a0, END_CHECK_KGHOST
+		mv t1, a5
+		#mv t0, a4
+		#la a0, black_block
+		#lh a1, 0(t0)
+		#lh a2, 2(t0)
+		#mv a3,s0
+
+		#call PRINT
 		
-		call PRINT
-		la t0, FANTASMA_VIVO
-		lb t1, 0(t0)
-		addi t1, t1, -1
-		sb t1, 0(t0)						
+		lb t0, 0(t1)
+		addi t0, t0, -1
+		sb t0, 0(t1)						
 		j GAME_LOOP
-	END_CHECK_GHOST: ret
+	END_CHECK_KGHOST: ret
 ##### FANTASMA
 MOVER_FANTASMA:
 	la t0, FANTASMA_VIVO
@@ -1900,7 +1916,7 @@ MOVER_FANTASMA_AUX:
 	la t0, POSICAO_FANTASMA_AUX
 	li t1,60
 	sh t1, 0(t0)
-	li t1,160
+	li t1,136
 	sh t1, 2(t0)
 	la t0, FANTASMA_AUX_VIVO
 	li t3, 1
@@ -1920,7 +1936,7 @@ MOVER_FANTASMA_AUX:
 	
 	la t0, POSICAO_FANTASMA_AUX
 	lh t1, 0(t0)
-	li t2,40
+	li t2,50
 	blt t1, t2, DIR_AUX_DIREITA
 	li t2, 144
 	bgt t1, t2, DIR_AUX_ESQUERDA
@@ -2043,15 +2059,26 @@ PRINT.Line:
 	ret
 
 LOST_GAME:
-la a0, sf
-li a1, 60
-li a2, 60
-li a3,0
-call PRINT
-li a3, 1
-call PRINT
-li a7, 10
-ecall		
+	la a0, sf
+	li a2, 60
+	li a1, 60
+	li a3, 0
+	call PRINT
+	li a3, 1
+	call PRINT
+	
+	li a0, 75
+	li a1, 4500
+	li a2, 96
+	li a3, 120
+	li a7, 33
+	ecall
+	
+	li a0,2000 
+	li a7,132
+	ecall
+	
+	j __FASE_3__			
 NEXT_FASE:
 li a7, 10
 ecall	
