@@ -3,19 +3,21 @@
 FASE_3: .string "FASE 3"
 
 POSICAO_PERSONAGEM: .half 32,8
-ANTIGA_POSICAO_PERSONAGEM: .half 160,80
+ANTIGA_POSICAO_PERSONAGEM: .half 164,92
 sprite: .word 0x00000000
 DIR_PERSONAGEM : .byte 'd'
 
-KEY_POSITION: .half 24, 200
-CAUGHT_KEY: .byte 0,0
+KEY_POSITION: .half 192, 132
+CAUGHT_KEY: .byte 0
+CAUGHT_KEY_AUX: .byte 0
 
 POSICAO_TIRO: .half 0,0
 ANTIGA_POSICAO_TIRO:.half 0,0
 
 
 
-POSICAO_PORTAL: .half 148,80
+
+POSICAO_PORTAL: .half 164,92
 
 LIFE_MSG: .string "LIFE: "
 LIFE: .byte 5
@@ -48,16 +50,34 @@ LIMIT_RIGHT: .half 000
 
 
 
+######## FANTASMA #######
+POSICAO_FANTASMA :.half 12,32
+ANTIGA_POSICAO_FANTASMA: .half 0,0
+FANTASMA_VIVO: .byte 10
+DIR_FANTASMA: .byte 's'
+COUNTER_FANTASMA:.word 0
+AUX_T_FANTASMA: .word 0
+#########
+
+######## FANTASMA 2 #######
+POSICAO_FANTASMA_AUX :.half 60,136
+ANTIGA_POSICAO_FANTASMA_AUX: .half 60,160
+FANTASMA_AUX_VIVO: .byte 10
+DIR_FANTASMA_AUX: .byte 'd'
+
+#########
+
 
 CURRENT_CHECKED_TIRO:.byte 0
-
+CURRENT_CHECKED_F: .byte 0
 
 
 
 #.include "key.data"
 
 .include "lower_block.data"
-.include "block.s"
+#.include "block.s"
+.include "sprites/fantasma.data"
 .include "tiro.data"
 .include "black_block.s"
 .include "erase_tiro.data"
@@ -72,6 +92,7 @@ CURRENT_CHECKED_TIRO:.byte 0
 .include "sprites/personagem_frente.data"
 .include "sprites/personagem_costas.data"
 .include "sprites/porta.data"
+.include "sprites/sf.data"
 .include "sprites/inimigo_baixo.data"
 .include "sprites/inimigo_cima.data"
 .include "sprites/inimigo_direita.data"
@@ -110,7 +131,7 @@ CURRENT_CHECKED_TIRO:.byte 0
 	li a3, 1
 	call PRINT	
 	
-	la a0, block
+	la a0, inimigo_baixo
 	la t0, POSICAO_ATIRADOR
 	lh a1, 0(t0)
 	lh a2, 2(t0)
@@ -118,6 +139,9 @@ CURRENT_CHECKED_TIRO:.byte 0
 	call PRINT
 	li a3, 1
 	call PRINT
+	
+	
+	
 	
 	li a7,104
 	la a0,FASE_3
@@ -209,14 +233,6 @@ CURRENT_CHECKED_TIRO:.byte 0
 	ecall
 	
 	
-	la t0, POSICAO_ATIRADOR
-	la a0, block
-	lh a1, 0(t0)
-	lh a2, 2(t0)
-	li a3, 0
-	#call PRINT
-	li a3, 1
-	#call PRINT
 	
 	
 	j GAME_LOOP
@@ -387,6 +403,10 @@ GAME_LOOP:
 	call PRINT
 	
 	
+	call MOVER_FANTASMA
+	MOVEU_FANTASMA:
+	call MOVER_FANTASMA_AUX
+	MOVEU_FANTASMA_AUX:
 	
 	li a1, 'a' 
 	call CHECK_TIRO_ATIRADOR
@@ -400,7 +420,7 @@ GAME_LOOP:
 	
 	la t1, CAUGHT_KEY
 	lb t0, 0(t1)
-	bne zero,t0, Has_KEY
+	bne zero,t0, Check_Has_KEY
 	la t0, KEY_POSITION
 	la a0, key
 	lh a1, 0(t0)
@@ -411,13 +431,37 @@ GAME_LOOP:
 	xori a3, a3,1
 	call PRINT
 	j GAME_LOOP
-	Has_KEY:
+	Check_Has_KEY:
+	la t0, CAUGHT_KEY_AUX
+	lb t1, 0(t0)
+	bne zero, t1, Has_Key
+	li t2, 1
+	sb t2, 0(t0)
 	la t0, KEY_POSITION
-	la a0, erase_tiro
+	la a0, black_block
 	lh a1, 0(t0)
 	lh a2, 2(t0)
 	mv a3, s0
+	xori a3, a3,1
+	call PRINT
+	li t1, 52
+	li t2, 220
+	la t0, KEY_POSITION
+	sh t1, 0(t0)
+	sh t2, 2(t0)
+	la t0, CAUGHT_KEY
+	sb zero, 0(t0)
+	la t0, LIMIT_DOWN
+	li t1,180
+	sh t1, 0(t0)
 	
+	j GAME_LOOP
+	Has_Key:
+	la t0, KEY_POSITION
+	la a0, black_block
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	mv a3, s0
 	
 	xori a3, a3,1
 	call PRINT
@@ -917,7 +961,7 @@ TIRO:
 		li t0, 16
 		blt a2, t0, GAME_LOOP
 		
-		## call CHECK_FANTASTMA
+		call CHECK_IF_KILLED_GHOST
 		
 		j  LOOP_PRINT_TIRO_UP
 		END_TIRO_UP: ret
@@ -982,7 +1026,7 @@ TIRO:
 		li t0, 210
 		bgt a2, t0, GAME_LOOP
 		
-		## call CHECK_FANTASTMA
+		call CHECK_IF_KILLED_GHOST
 		
 		j LOOP_PRINT_TIRO_DOWN
 		END_TIRO_DOWN: ret
@@ -1050,7 +1094,7 @@ TIRO:
 		li t0, 294
 		bge a1, t0, GAME_LOOP
 		
-		## call CHECK_FANTASTMA
+		call CHECK_IF_KILLED_GHOST
 		j LOOP_PRINT_TIRO_RIGHT
 		END_TIRO_RIGHT: ret
 		
@@ -1113,14 +1157,12 @@ TIRO:
 		li t0, 16
 		blt a1, t0,GAME_LOOP
 		
-		## call CHECK_FANTASTMA
+		call CHECK_IF_KILLED_GHOST
 		
 		
 		j LOOP_PRINT_TIRO_LEFT
 		END_TIRO_LEFT: ret
 ret
-
-
 
 CHECK_IF_HIT_PERS:
 	
@@ -1180,7 +1222,7 @@ CHECK_IF_HIT_PERS:
 	lb t0, 0(t1)
 	addi t0, t0, -1
 	sb t0, 0(t1)
-	#beq t0, zero, LOST_GAME
+	beq t0, zero, LOST_GAME
 	mv t0, a5
 	la a0, erase_tiro
 	lh a1, 0(t0)
@@ -1273,7 +1315,7 @@ CHECK_TIRO_ATIRADOR:
 	lh a2, 2(t0)
 	
 	la t5, LIMIT_DOWN
-	lb t2, 0(t5)
+	lh t2, 0(t5)
 	blt a2, t2 , TD_IS_VALID
 	TD_INVALID:
 	la t1, POSICAO_TIRO1
@@ -1532,7 +1574,272 @@ TIRO_TO_LEFT:
 	j ATIROU_LEFT
 	
 #################################################################################
+	CHECK_IF_HIT_GHOST:
+		
+		la t0, CURRENT_CHECKED_F
+		lb t1, 0(t0)
+		beq t1, zero, IS_FN
+		li t0, 1
+		beq t1,t0,IS_FAUX
+		IS_FN:
+		la a3, POSICAO_FANTASMA
+		la a4, FANTASMA_VIVO
+		j CONTINUE_CHECK_IF_HIT_GHOST
+		IS_FAUX:
+		la a3, POSICAO_FANTASMA_AUX
+		la a4, FANTASMA_AUX_VIVO
+		j CONTINUE_CHECK_IF_HIT_GHOST	
+		
+		
+		
+		CONTINUE_CHECK_IF_HIT_GHOST:
+		
+		la t0, POSICAO_PERSONAGEM
+		
+		mv t1, a3
+		
+		lh t2, 0(t0)
+		lh t3, 0(t1)
+		addi t2, t2, -1
+		slt t5, t2, t3
+		addi t2, t2, 17
+		slt t6, t3, t2
+		and t5, t5, t6
+		addi t2, t2, -17
+		slt t6, t2, t3
+		addi t3, t3, 16
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t6, t4
+		or t5, t5, t4
+		mv a1, t5
+		
+		lh t2, 2(t0)
+		lh t3, 2(t1)
+		addi t2, t2, -1
+		slt t5, t2, t3
+		addi t2, t2, 17
+		slt t6, t3, t2
+		and t5, t5, t6
+		addi t2, t2, -17
+		slt t6, t2, t3
+		addi t3, t3, 16
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t6, t4
+		or t5, t5, t4
+		
+		mv a0, t5
+		
+		and a0, a0, a1
+		
+		
+		beq zero, a0, END_CHECK_HIT_GHOST
+		
+		la t1, LIFE
+		lb t0, 0(t1)
+		addi t0, t0, -1
+		sb t0, 0(t1)
+		beq t0, zero, LOST_GAME
+		mv t0, a3
+		la a0, black_block
+		lh a1, 0(t0)
+		lh a2, 2(t0)
+		mv a3,s0
+		
+		call PRINT
+		mv t0,a4
+		sb zero, 0(t0)
+		la t0,AUX_T_FANTASMA
+		sb zero, 0(t0)
+		j MOVEU_FANTASMA						
+		
+	END_CHECK_HIT_GHOST: ret
+#######################################################
+CHECK_IF_KILLED_GHOST:
+		la t0, FANTASMA_VIVO
+		lb t1, 0(t0)
+		bne zero, t1, 	CONTINUE_CHECK_IF_KILLED_GHOST
+		ret
+	
+		CONTINUE_CHECK_IF_KILLED_GHOST:
+		la t0, POSICAO_FANTASMA
+		la t1, POSICAO_TIRO
+		
+		lh t2, 0(t0)
+		lh t3, 0(t1)
+		addi t2, t2, -1
+		slt t5, t2, t3
+		addi t2, t2, 17
+		slt t6, t3, t2
+		and t5, t5, t6
+		addi t2, t2, -17
+		slt t6, t2, t3
+		addi t3, t3, 4
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t6, t4
+		or t5, t5, t4
+		
+		mv a1, t5
+		lh t2, 2(t0)
+		lh t3, 2(t1)
+		addi t2, t2, -1
+		slt t5, t2, t3
+		addi t2, t2, 17
+		slt t6, t3, t2
+		and t5, t5, t6
+		addi t2, t2, -17
+		slt t6, t2, t3
+		addi t3, t3, 4
+		addi t2, t2, 17
+		slt t4, t3, t2
+		and t4, t6, t4
+		or t5, t5, t4
+		
+		mv a0, t5
+		
+		and a0, a0, a1
+		
+		#ebreak
+		beq zero, a0, END_CHECK_GHOST
+		la t0, POSICAO_FANTASMA
+		la a0, black_block
+		lh a1, 0(t0)
+		lh a2, 2(t0)
+		mv a3,s0
+		
+		call PRINT
+		la t0, FANTASMA_VIVO
+		lb t1, 0(t0)
+		addi t1, t1, -1
+		sb t1, 0(t0)						
+		j GAME_LOOP
+	END_CHECK_GHOST: ret
+##### FANTASMA
+MOVER_FANTASMA:
+	la t0, FANTASMA_VIVO
+	lb t1,0(t0)
+	bne t1, zero, CONTINUE_MOVER_FANTASMA
+	la t0, POSICAO_FANTASMA
+	li t1,12
+	sh t1, 0(t0)
+	li t1,32
+	sh t1, 2(t0)
+	la t0, FANTASMA_VIVO
+	li t3, 1
+	sb t3, 0(t0)
+	#la t0, COUNTER_FANTASMA
+	#lw t1, 0(t0)
+	#addi t1, t1, 1
+	#sw t1, 0(t0)
+	#li t2, 0x100
+	#rem t2,t1, t2
+	#bne t2, zero,END_MOVER_FANTASMA
+	#ebreak
+	#sw zero, 0(t0)
+	j MOVEU_FANTASMA
+	CONTINUE_MOVER_FANTASMA:
+	
+	la t0, POSICAO_FANTASMA
+	la t3, ANTIGA_POSICAO_FANTASMA
+	lh t1, 0(t0)
+	lh t2, 2(t0)
+	sh t1, 0(t3)
+	sh t2, 2(t3)
+	
+	####
+	
+	
+	
+	MOVER_FANTASMA_LOOP:
+	la t0, POSICAO_FANTASMA
+	lh t1, 0(t0)
+	la t1, AUX_T_FANTASMA
+	lb t0, 0(t1)
+	li t2, 4
+	rem t1, t0, t2
+	
+	beq zero, t1,MOVER_FANTASMA_BAIXO
+	li t2, 1
+	beq t2,t1, MOVER_FANTASMA_DIREITA
+	li t2, 2
+	beq t2, t1, MOVER_FANTASMA_ESQUERDA
+	li  t2, 3 
+	beq t2, t1,  MOVER_FANTASMA_CIMA
+	
+	MOVER_FANTASMA_ESQUERDA:
+	
+	la t0, POSICAO_FANTASMA
+	lh t1, 0(t0)
+	addi t1, t1, -4
+	sh t1, 0(t0)
+	li t2, 12
+	ble t1, t2, ADD_AUX_T_FANTASMA
+	j CONTINUA_FANTASMA
+	MOVER_FANTASMA_DIREITA:
+	
+	la t0, POSICAO_FANTASMA
+	lh t1, 0(t0)
+	addi t1, t1, 4
+	sh t1, 0(t0)
+	li t2, 180
+	bgt t1, t2, ADD_AUX_T_FANTASMA
+	j CONTINUA_FANTASMA
+	MOVER_FANTASMA_BAIXO:
+	
+	la t0, POSICAO_FANTASMA
+	lh t1, 2(t0)
+	addi t1, t1, 4
+	sh t1, 2(t0)
+	li t2, 204
+	bgt t1, t2, ADD_AUX_T_FANTASMA
+	j CONTINUA_FANTASMA
+	MOVER_FANTASMA_CIMA:
+	la t0, POSICAO_FANTASMA
+	lh t1, 2(t0)
+	addi t1, t1, -4
+	sh t1, 2(t0)
+	li t2, 32
+	ble t1, t2, ADD_AUX_T_FANTASMA
+	j CONTINUA_FANTASMA
+	ADD_AUX_T_FANTASMA:
+	la t5, AUX_T_FANTASMA
+	lw t1, 0(t5)
+	addi t1, t1, 1
+	sw t1, 0(t5)
+	j CONTINUA_FANTASMA
+	CONTINUA_FANTASMA:
+	la t0, POSICAO_FANTASMA
+	la a0, block
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	mv a3,s0
+	
+	call PRINT
+	
+	
 
+	la t0, ANTIGA_POSICAO_FANTASMA
+	la a0, black_block
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	mv a3,s0
+	xori a3, a3, 1
+	
+	
+	call PRINT
+	
+	la t0, CURRENT_CHECKED_F
+	sb zero, 0(t0)
+	call CHECK_IF_HIT_GHOST
+	
+	
+	
+
+	END_MOVER_FANTASMA:
+		j MOVEU_FANTASMA
+######################################
 
 CHECK_IF_ARRIVED_DOOR:
 		la t0, CAUGHT_KEY
@@ -1586,6 +1893,97 @@ CHECK_IF_ARRIVED_DOOR:
 								
 		j NEXT_FASE
 	END_CHECK_ARRIVED_DOOR: ret
+MOVER_FANTASMA_AUX:
+	la t0, FANTASMA_AUX_VIVO
+	lb t1,0(t0)
+	bne t1, zero, CONTINUE_MOVER_FANTASMA_AUX
+	la t0, POSICAO_FANTASMA_AUX
+	li t1,60
+	sh t1, 0(t0)
+	li t1,160
+	sh t1, 2(t0)
+	la t0, FANTASMA_AUX_VIVO
+	li t3, 1
+	sb t3, 0(t0)
+	
+	j MOVEU_FANTASMA_AUX
+	CONTINUE_MOVER_FANTASMA_AUX:
+	
+	la t0, POSICAO_FANTASMA_AUX
+	la t3, ANTIGA_POSICAO_FANTASMA_AUX
+	lh t1, 0(t0)
+	lh t2, 2(t0)
+	sh t1, 0(t3)
+	sh t2, 2(t3)
+	
+	####
+	
+	la t0, POSICAO_FANTASMA_AUX
+	lh t1, 0(t0)
+	li t2,40
+	blt t1, t2, DIR_AUX_DIREITA
+	li t2, 144
+	bgt t1, t2, DIR_AUX_ESQUERDA
+	la t1, DIR_FANTASMA_AUX
+	lb t0, 0(t1)
+	li t2, 'd'
+	beq t2, t0, MOVER_FANTASMA_AUX_DIREITA
+	li t2, 'a'
+	beq t2, t0, MOVER_FANTASMA_AUX_ESQUERDA
+	
+	DIR_AUX_DIREITA:
+	la t4, DIR_FANTASMA_AUX
+	li t5, 'd'
+	sb t5, 0(t4)
+	MOVER_FANTASMA_AUX_DIREITA:
+	la t0, POSICAO_FANTASMA_AUX
+	lh t1, 0(t0)
+	addi t1, t1, 4
+	sh t1, 0(t0)
+	j CONTINUA_FANTASMA_AUX
+	DIR_AUX_ESQUERDA:
+	la t4, DIR_FANTASMA_AUX
+	li t5, 'a'
+	sb t5, 0(t4)
+	MOVER_FANTASMA_AUX_ESQUERDA:
+	la t0, POSICAO_FANTASMA_AUX
+	lh t1, 0(t0)
+	addi t1, t1, -4
+	sh t1, 0(t0)
+	j CONTINUA_FANTASMA_AUX
+	
+	CONTINUA_FANTASMA_AUX:
+	la t0, POSICAO_FANTASMA_AUX
+	la a0, block
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	mv a3,s0
+	
+	call PRINT
+	
+	
+
+	la t0, ANTIGA_POSICAO_FANTASMA_AUX
+	la a0, black_block
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	mv a3,s0
+	xori a3, a3, 1
+	
+	
+	call PRINT
+	
+	la t0, CURRENT_CHECKED_F
+	li t1, 1
+	sb t1, 0(t0)
+	call CHECK_IF_HIT_GHOST
+	
+	
+	
+
+	END_MOVER_FANTASMA_AUX:
+		j MOVEU_FANTASMA_AUX
+
 
 #a0 = endereco_imagem
 #a1 = x
@@ -1644,9 +2042,16 @@ PRINT.Line:
 	blt t2, t5, PRINT.Line
 	ret
 
-#LOST_GAME:
-#li a7, 10
-#ecall		
+LOST_GAME:
+la a0, sf
+li a1, 60
+li a2, 60
+li a3,0
+call PRINT
+li a3, 1
+call PRINT
+li a7, 10
+ecall		
 NEXT_FASE:
 li a7, 10
 ecall	
