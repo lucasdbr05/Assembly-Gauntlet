@@ -2,7 +2,7 @@
 
 FASE_3: .string "FASE 3"
 
-POSICAO_PERSONAGEM: .half 32,22
+POSICAO_PERSONAGEM: .half 32,8
 ANTIGA_POSICAO_PERSONAGEM: .half 160,80
 sprite: .word 0x00000000
 DIR_PERSONAGEM : .byte 'd'
@@ -41,7 +41,7 @@ ATIRANDO_DOWN: .byte 0
 ATIRANDO_LEFT: .byte 0
 ATIRANDO_RIGHT: .byte 0
 LIMIT_DOWN: .half 82
-LIMIT_LEFT: .half 000
+LIMIT_LEFT: .half 180
 LIMIT_RIGHT: .half 000
 ##########
 
@@ -385,6 +385,7 @@ GAME_LOOP:
 	
 	xori a3, a3,1
 	call PRINT
+	
 	
 	
 	li a1, 'a' 
@@ -833,6 +834,8 @@ MOVE_DOWN:
 	
 	end_check_key_md: ret
 
+
+AUX_GAME_LOOP: j GAME_LOOP
 TIRO:
 	#Atualiza posicao inicial do tiro
 	la t0, POSICAO_PERSONAGEM
@@ -1118,20 +1121,103 @@ TIRO:
 ret
 
 
+
+CHECK_IF_HIT_PERS:
+	
+						
+	
+	la a5, POSICAO_TIRO1	
+			
+
+	la t0, POSICAO_PERSONAGEM
+	mv t1, a5
+	
+	lh t2, 0(t0)
+	lh t3, 0(t1)
+	addi t2, t2, -1
+	slt t5, t2, t3
+	addi t2, t2, 17
+	slt t6, t3, t2
+	and t5, t5, t6
+	addi t2, t2, -17
+	slt t6, t2, t3
+	addi t3, t3, 4
+	addi t2, t2, 17
+	slt t4, t3, t2
+	and t4, t6, t4
+	or t5, t5, t4
+	mv a1, t5
+	
+	lh t2, 2(t0)
+	lh t3, 2(t1)
+	addi t2, t2, -1
+	slt t5, t2, t3
+	addi t2, t2, 17
+	slt t6, t3, t2
+	and t5, t5, t6
+	addi t2, t2, -17
+	slt t6, t2, t3
+	addi t3, t3, 4
+	addi t2, t2, 17
+	slt t4, t3, t2
+	and t4, t6, t4
+	or t5, t5, t4
+	
+	mv a0, t5
+	
+	and a0, a0, a1
+	
+	
+	beq zero, a0, END_CHECK_HIT_TIRO
+	la a0, ATIRANDO_DOWN
+	sb zero, 0(a0)
+	la a0, ATIRANDO_LEFT
+	sb zero, 0(a0)
+	la a0, ATIRANDO_RIGHT
+	sb zero, 0(a0)
+
+	la t1, LIFE
+	lb t0, 0(t1)
+	addi t0, t0, -1
+	sb t0, 0(t1)
+	#beq t0, zero, LOST_GAME
+	mv t0, a5
+	la a0, erase_tiro
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	mv a3,s0
+	
+	call PRINT
+
+	mv  t0, a5
+	lb t1, 4(t0)
+	sb zero, 4(t0)						
+	j AUX_GAME_LOOP
+	END_CHECK_HIT_TIRO: ret	
+
+
+
+############ TIRO DO ATIRADOR #########
 CHECK_TIRO_ATIRADOR:
 	
 	li t1, 's'
 	beq a1, t1, TIRO_TO_DOWN
 	li t1, 'd'
-	#beq a1, t1, TIRO_TO_RIGHT
+	beq a1, t1, TIRO_TO_RIGHT
 	li t1, 'a'
-	#beq a1, t1, TIRO_TO_LEFT
+	beq a1, t1, TIRO_TO_LEFT
 	
 	
 	TIRO_TO_DOWN:
 	la t2, ATIRANDO_DOWN
 	lb t3, 0(t2)
 	bne zero, t3, CONTINUE_TIRO_TO_DOWN
+	la t2, ATIRANDO_LEFT
+	lb t3, 0(t2)
+	bne zero, t3, ATIROU_DOWN
+	la t2, ATIRANDO_RIGHT
+	lb t3, 0(t2)
+	bne zero, t3, ATIROU_DOWN
 	la t0, POSICAO_TIRO1
 	la t1, POSICAO_TIRO2
 	li a1, 64
@@ -1170,7 +1256,12 @@ CHECK_TIRO_ATIRADOR:
 	mv a0, t5
 	la t2, ATIRANDO_DOWN
 	sb zero, 0(t2)
-	beq zero, a0, ATIROU_DOWN
+	
+	
+	
+	bne zero, a0, CONTINUE_ATIROU_DOWN
+	j TD_INVALID
+	CONTINUE_ATIROU_DOWN: 
 	la t2, ATIRANDO_DOWN
 	li t1, 1
 	sb t1, 0(t2)
@@ -1183,11 +1274,20 @@ CHECK_TIRO_ATIRADOR:
 	
 	la t5, LIMIT_DOWN
 	lb t2, 0(t5)
-	blt a2, t2 , T1_IS_VALID
+	blt a2, t2 , TD_IS_VALID
+	TD_INVALID:
+	la t1, POSICAO_TIRO1
+	lh a1, 0(t1)
+	lh a2, 2(t1)
+	la a0, erase_tiro
+	li a3, 1
+	call PRINT
+	li a3, 0
+	call PRINT
 	la t2, ATIRANDO_DOWN
 	sb zero, 0(t2)	
 	j ATIROU_DOWN
-	T1_IS_VALID:
+	TD_IS_VALID:
 	sh a1, 0(t1)
 	sh a2, 2(t1)
 	addi a2, a2, 4
@@ -1199,18 +1299,239 @@ CHECK_TIRO_ATIRADOR:
 	lh a1, 0(t1)
 	lh a2, 2(t1)
 	la a0, erase_tiro
-	xori a3, a3, 1
+	li a3, 1
+	call PRINT
+	li a3, 0
 	call PRINT
 	
 	la t0, CURRENT_CHECKED_TIRO
 	li t1, 1
 	sb t1, 0(t0)
 	
-	#call CHECK_IF_HIT_PERS
+	call CHECK_IF_HIT_PERS
 	j ATIROU_DOWN
 
+	TIRO_TO_RIGHT:
+	la t2, ATIRANDO_RIGHT
+	lb t3, 0(t2)
+	bne zero, t3, CONTINUE_TIRO_TO_RIGHT
+	la t2, ATIRANDO_LEFT
+	lb t3, 0(t2)
+	bne zero, t3, ATIROU_RIGHT
+	la t2, ATIRANDO_DOWN
+	lb t3, 0(t2)
+	bne zero, t3, ATIROU_RIGHT
+	la t0, POSICAO_TIRO1
+	la t1, POSICAO_TIRO2
+	li a1, 72
+	li a2, 24
+	sh a1, 0(t0)
+	sh a1, 0(t1)
+	sh a2, 2(t0)
+	sh a2, 2(t1)
+	CONTINUE_TIRO_TO_RIGHT:
+	li a1, 72
+	li a2, 24
+	la a0, erase_tiro
+	li a3,0
+	call PRINT
+	li a3,1 
+	call PRINT
+	la t0, POSICAO_PERSONAGEM
+	la t1, POSICAO_ATIRADOR
+	
+	lh t2, 2(t0)
+	lh t3, 2(t1)
+	addi t3, t3, -2
+	slt t5, t2,t3
+	addi t2, t2, 17
+	slt t4, t3, t2
+	and t5, t5, t4
+	addi t3, t3, 8
+	addi t2, t2, -17
+	addi t3, t3, 16
+	slt t6, t2,t3
+	addi t2, t2, 17
+	slt t4, t3, t2
+	and t4, t4, t6
+	or t5, t4, t5
+	
+	mv a0, t5
+	la t0, POSICAO_PERSONAGEM
+	la t1, POSICAO_ATIRADOR
+	lh t2, 0(t0)
+	lh t3, 0(t1)
+	slt t3, t3, t2
+	mv a1, t3
+	and a0, a0, a1
+	
+	
+	la t2, ATIRANDO_RIGHT
+	sb zero, 0(t2)
+	bne zero, a0, 	CONTINUE_ATIROU_RIGHT
+	j TR_INVALID
+	CONTINUE_ATIROU_RIGHT:
+	la t2, ATIRANDO_RIGHT
+	li t1, 1
+	sb t1, 0(t2)
+	la t0, POSICAO_TIRO1
+	la t1, ANTIGA_POSICAO_TIRO1
+	
+	la a0, tiro
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	li t2, 200
+	ble a1, t2 , TR_IS_VALID
+	TR_INVALID:
+	la t1, POSICAO_TIRO1
+	lh a1, 0(t1)
+	lh a2, 2(t1)
+	la a0, erase_tiro
+	li a3, 1
+	call PRINT
+	li a3, 0
+	call PRINT
+	la t2, ATIRANDO_RIGHT
+	sb zero, 0(t2)	
+	j ATIROU_RIGHT
+	la t2, ATIRANDO_RIGHT
+	sb zero, 0(t2)	
+	j ATIROU_RIGHT
+	TR_IS_VALID:
+	sh a1, 0(t1)
+	sh a2, 2(t1)
+	addi a1, a1, 4
+	sh a1, 0(t0)
+	mv a3,s0
+	call PRINT
+	
+	la t1, ANTIGA_POSICAO_TIRO1
+	lh a1, 0(t1)
+	lh a2, 2(t1)
+	la a0, erase_tiro
+	li a3, 1
+	call PRINT
+	li a3, 0
+	call PRINT
+	la t0, CURRENT_CHECKED_TIRO
+	li t1, 3
+	sb t1, 0(t0)
+	
+	call CHECK_IF_HIT_PERS
+			
+	j ATIROU_RIGHT
 
-
+TIRO_TO_LEFT:
+	la t2, ATIRANDO_LEFT
+	lb t3, 0(t2)
+	bne zero, t3, CONTINUE_TIRO_TO_LEFT
+	la t2, ATIRANDO_RIGHT
+	lb t3, 0(t2)
+	bne zero, t3, ATIROU_LEFT
+	la t2, ATIRANDO_DOWN
+	lb t3, 0(t2)
+	bne zero, t3, ATIROU_LEFT
+	la t0, POSICAO_TIRO1
+	la t1, POSICAO_TIRO2
+	li a1, 52
+	li a2, 24
+	sh a1, 0(t0)
+	sh a1, 0(t1)
+	sh a2, 2(t0)
+	sh a2, 2(t1)
+	CONTINUE_TIRO_TO_LEFT:
+	li a1, 52
+	li a2, 24
+	la a0, erase_tiro
+	li a3,0
+	call PRINT
+	li a3,1 
+	call PRINT
+	la t0, POSICAO_PERSONAGEM
+	la t1, POSICAO_ATIRADOR
+	
+	lh t2, 2(t0)
+	lh t3, 2(t1)
+	addi t3, t3, -2
+	slt t5, t2,t3
+	addi t2, t2, 17
+	slt t4, t3, t2
+	and t5, t5, t4
+	addi t3, t3, 8
+	addi t2, t2, -17
+	addi t3, t3, 16
+	slt t6, t2,t3
+	addi t2, t2, 17
+	slt t4, t3, t2
+	and t4, t4, t6
+	or t5, t4, t5
+	
+	mv a0, t5
+	la t0, POSICAO_PERSONAGEM
+	la t1, POSICAO_ATIRADOR
+	lh t2, 0(t0)
+	lh t3, 0(t1)
+	slt t3, t2, t3
+	mv a1, t3
+	and a0, a0, a1
+	
+	
+	la t2, ATIRANDO_LEFT
+	sb zero, 0(t2)
+	bne zero, a0, 	CONTINUE_ATIROU_LEFT
+	j TL_INVALID
+	CONTINUE_ATIROU_LEFT:
+	la t2, ATIRANDO_LEFT
+	li t1, 1
+	sb t1, 0(t2)
+	la t0, POSICAO_TIRO1
+	la t1, ANTIGA_POSICAO_TIRO1
+	
+	la a0, tiro
+	lh a1, 0(t0)
+	lh a2, 2(t0)
+	li t2, 10
+	bge a1, t2 , TL_IS_VALID
+	TL_INVALID:
+	la t1, POSICAO_TIRO1
+	lh a1, 0(t1)
+	lh a2, 2(t1)
+	la a0, erase_tiro
+	li a3, 1
+	call PRINT
+	li a3, 0
+	call PRINT
+	la t2, ATIRANDO_LEFT
+	sb zero, 0(t2)	
+	j ATIROU_LEFT
+	la t2, ATIRANDO_LEFT
+	sb zero, 0(t2)	
+	j ATIROU_LEFT
+	TL_IS_VALID:
+	sh a1, 0(t1)
+	sh a2, 2(t1)
+	addi a1, a1, -4
+	sh a1, 0(t0)
+	mv a3,s0
+	call PRINT
+	
+	la t1, ANTIGA_POSICAO_TIRO1
+	lh a1, 0(t1)
+	lh a2, 2(t1)
+	la a0, erase_tiro
+	li a3, 1
+	call PRINT
+	li a3, 0
+	call PRINT
+	la t0, CURRENT_CHECKED_TIRO
+	li t1, 3
+	sb t1, 0(t0)
+	
+	call CHECK_IF_HIT_PERS
+			
+	j ATIROU_LEFT
+	
+#################################################################################
 
 
 CHECK_IF_ARRIVED_DOOR:
