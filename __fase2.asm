@@ -10,13 +10,14 @@ DIR_PERSONAGEM : .byte 'd'
 KEY_POSITION: .half 48, 200
 CAUGHT_KEY: .byte 0
 CAUGHT_KEY_AUX: .byte 0
+FST_TIME_CAUGHT:.byte 0
 
 POSICAO_TIRO: .half 0,0
 ANTIGA_POSICAO_TIRO:.half 0,0
 
 
 
-POSICAO_PORTAL: .half 148,80
+POSICAO_PORTAL: .half 64,140
 
 LIFE_MSG: .string "LIFE: "
 LIFE: .byte 5
@@ -27,10 +28,10 @@ PONTOS: .word 1000000
 
 
 ##### ATIRADOR 1######
-POSICAO_ATIRADOR_1: .half 88,12
-POSICAO_TIRO1_A1: .half 92,36,1
+POSICAO_ATIRADOR_1: .half 56,12
+POSICAO_TIRO1_A1: .half 64,32,1
 ANTIGA_POSICAO_TIRO1_A1: .half 108,36
-POSICAO_TIRO2_A1: .half 92,36,0
+POSICAO_TIRO2_A1: .half 64,32,0
 ANTIGA_POSICAO_TIRO2_A1: .half 108,36
 VIDAS_A1:.string "ATIRADOR 1:"
 ATIRADOR_1_VIVO: .byte 5
@@ -63,10 +64,6 @@ CURRENT_CHECKED_TIRO:.byte 0
 CURRENT_CHECKED_AT: .byte 0
 
 
-
-
-
-.include "lower_block.data"
 .include "block.s"
 .include "tiro.data"
 .include "black_block.s"
@@ -89,8 +86,14 @@ CURRENT_CHECKED_AT: .byte 0
 .include "sprites/inimigo_esquerda.data"
 
 
-
+__FASE_2__:
 .text
+	li a0, 75
+	li a1, 4500
+	li a2, 96
+	li a3, 120
+	li a7, 33
+	ecall
 	li t1,0xFF000000	# endereco inicial da Memoria VGA - Frame 0
 	li t2,0xFF012C00	# endereco final 
 	li t3,0x07070707	# cor vermelho|vermelho|vermelhor|vermelho
@@ -197,7 +200,7 @@ CURRENT_CHECKED_AT: .byte 0
 	li a4,1
 	ecall
 	
-	
+	SETUP_PERS:
 	la t0, POSICAO_ATIRADOR_1
 	la a0, inimigo_baixo
 	lh a1, 0(t0)
@@ -226,7 +229,15 @@ CURRENT_CHECKED_AT: .byte 0
 	call PRINT
 	
 	j GAME_LOOP
-	
+	RESTAURA_VIDA:
+	li t1, 5
+	la t0, ATIRADOR_1_VIVO
+	sb t1, 0(t0)
+	la t0, ATIRADOR_2_VIVO
+	sb t1, 0(t0)
+	la t0, ATIRADOR_3_VIVO
+	sb t1, 0(t0)
+	ret
 	
 	
 
@@ -271,6 +282,7 @@ GAME_LOOP:
 	
 	END_DIRS:
 	#########
+	
 	
 	la t1,LIFE
 	lb t0, 0(t1)
@@ -424,19 +436,20 @@ GAME_LOOP:
 	call PRINT
 	j GAME_LOOP
 	Check_Has_KEY:
+	
 	######
-	la t0, POSICAO_ATIRADOR_2
+	#la t0, POSICAO_ATIRADOR_2
 	la a0, black_block
-	lh a1, 0(t0)
-	lh a2, 2(t0)
+	li a1, 8
+	li a2, 64
 	li a3, 0
 	call PRINT
 	li a3, 1
 	call PRINT
-	la t0, POSICAO_ATIRADOR_3
+	#la t0, POSICAO_ATIRADOR_3
 	la a0, black_block
-	lh a1, 0(t0)
-	lh a2, 2(t0)
+	li a1, 92
+	li a2,164
 	li a3, 0
 	call PRINT
 	li a3, 1
@@ -445,16 +458,18 @@ GAME_LOOP:
 	la t0, CAUGHT_KEY_AUX
 	lb t1, 0(t0)
 	bne zero, t1, Has_Key
+
 	li t2, 1
 	sb t2, 0(t0)
 	la t0, KEY_POSITION
 	la a0, black_block
 	lh a1, 0(t0)
 	lh a2, 2(t0)
-	mv a3, s0
-	xori a3, a3,1
+	li a3,0
+	
 	call PRINT
-	li t1, 140
+
+	li t1, 120
 	li t2, 64
 	la t0, KEY_POSITION
 	sh t1, 0(t0)
@@ -463,6 +478,8 @@ GAME_LOOP:
 	sb zero, 0(t0)
 	
 	#####
+	call RESTAURA_VIDA
+	
 	la t0, POSICAO_ATIRADOR_2
 	li t1, 204
 	sh t1, 2(t0)
@@ -485,23 +502,28 @@ GAME_LOOP:
 	la t0, LIMIT_A1
 	li t1,180
 	sh t1, 0(t0)
-	
-	la t0, POSICAO_ATIRADOR_2
+	#la t0, POSICAO_ATIRADOR_2
 	la a0, inimigo_direita
-	lh a1, 0(t0)
-	lh a2, 2(t0)
+	li a1, 8
+	li a2, 204
 	li a3, 0
 	call PRINT
 	li a3, 1
 	call PRINT
-	la t0, POSICAO_ATIRADOR_3
+	#la t0, POSICAO_ATIRADOR_3
 	la a0, inimigo_esquerda
-	lh a1, 0(t0)
-	lh a2, 2(t0)
+	li a1, 92
+	li a2, 96
 	li a3, 0
 	call PRINT
 	li a3, 1
 	call PRINT
+	li a0, 61
+	li a1, 1300
+	li a2, 88
+	li a3, 110
+	li a7, 33
+	ecall
 	j GAME_LOOP
 	Has_Key:
 	la t0, KEY_POSITION
@@ -1513,10 +1535,10 @@ ATIRA_T1A1:
 		li a3,1 
 		call PRINT
 		
-		lb t1, 4(t0)
-		bne zero, t1, CONTINUE_CHECK_TIRO_1A1
+		lb t0, 4(t1)
+		bne zero, t0, CONTINUE_CHECK_TIRO_1A1
 		la t0, POSICAO_TIRO1_A1
-		li a1,92
+		li a1,64
 		li a2, 36
 		sh a1, 0(t0)
 		sh a2, 2(t0)
@@ -1562,10 +1584,11 @@ ATIRA_T1A1:
 		li t4, 1
 		sb t4, 4(t3)
 		DONT_UPDATE_T2A1:
-		li t2, 106
+		li t2, 180
 		ble a2, t2 , T1A1_IS_VALID
-		li a1,92
-		li a2, 36
+		
+		li a1,64
+		li a2, 32
 		sh a1, 0(t0)
 		sh a2, 2(t0)	
 		j ATIROU_T1A1
@@ -1576,6 +1599,7 @@ ATIRA_T1A1:
 		sh a2, 2(t0)
 		mv a3,s0
 		call PRINT
+		
 		la t1, ANTIGA_POSICAO_TIRO1_A1
 		lh a1, 0(t1)
 		lh a2, 2(t1)
@@ -1604,12 +1628,11 @@ ATIRA_T2A1:
 		la t0, POSICAO_TIRO2_A1
 		lb t1, 4(t0)
 		bne zero, t1, CONTINUE_CHECK_TIRO_2A1
-		li a1,92
+		li a1,64
 		li a2, 36
 		la t0, POSICAO_TIRO2_A1
 		sh a1, 0(t0)
 		sh a2, 2(t0)
-		
 		#li a1,92
 		#li a2, 36
 		#sh a1, 0(t0)
@@ -1652,9 +1675,9 @@ ATIRA_T2A1:
 		la a0, tiro
 		lh a1, 0(t0)
 		lh a2, 2(t0)
-		li t2, 106
+		li t2, 180
 		ble a2, t2 , T2A1_IS_VALID
-		li a1,92
+		li a1,64
 		li a2, 36
 		sh a1, 0(t0)
 		sh a2, 2(t0)	
@@ -2145,6 +2168,7 @@ PRINT.Line:
 	ret
 
 LOST_GAME:
+
 li a7, 10
 ecall		
 NEXT_FASE:
